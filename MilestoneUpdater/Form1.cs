@@ -1,16 +1,20 @@
 ﻿using ConfigApi;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Windows.Forms;
 using VideoOS.ConfigurationAPI;
+using VideoOS.Platform;
+using VideoOS.Platform.Messaging;
 using VideoOS.Platform.SDK.Platform;
 
 namespace MilestoneUpdater
@@ -72,16 +76,20 @@ namespace MilestoneUpdater
         }
 
 
+        private static String REMOTEFOLDER = @"c:\MilestoneHotfix";
+        private static String REMOTESHARENAME = "MilestoneHotfix";
 
-
-        private int CallProcess(ServerInfo remoteInfo)
+        private int CallProcess(ServerInfo remoteInfo, string filePath, string file)
         {
             WriteInConsole("Start updater on " + remoteInfo.Address, LogType.message);
 
             // Open Server Connection 
-            String filepath = "c:\\Temp";
-            String sharename = "Temp";
-            String file = "Milestone.Hotfix.202108031030.MS.21.12.12177.91.exe";
+          //  String filepath = "c:\\Temp";
+         //   String file = "Milestone.Hotfix.202108031030.MS.21.12.12177.91.exe";
+
+
+           // String sharename = "Temp";
+
             //String file = "dummyUpdater.exe";
 
             ConnectionOptions theConnection = new ConnectionOptions();
@@ -97,7 +105,7 @@ namespace MilestoneUpdater
 
             WriteInConsole("Creating Share Folder " + remoteInfo.Address, LogType.info);
             var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            object[] cmdMdTemp = { "cmd.exe /c md c:\\Temp" };
+            object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };
             var mdResult = Win32_Process_Class.InvokeMethod("Create", cmdMdTemp);
             WriteInConsole("Create Share Folder " + ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
 
@@ -106,7 +114,7 @@ namespace MilestoneUpdater
             // TODO Chech if folder is already shared 
             WriteInConsole("Sharing Folder " + remoteInfo.Address, LogType.info);
             var winShareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
-            ManagementBaseObject shareParams = SetShareParams(winShareClass, filepath, sharename);
+            ManagementBaseObject shareParams = SetShareParams(winShareClass, REMOTEFOLDER, REMOTESHARENAME);
 
             var outParams = winShareClass.InvokeMethod("Create", shareParams, null);
             WriteInConsole("Share Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(outParams.Properties["ReturnValue"].Value)), LogType.info);
@@ -115,8 +123,8 @@ namespace MilestoneUpdater
             // Copy the hotfix 
             try
             {
-                string shareFolder = @"\\" + remoteInfo.Address + "\\" + sharename;
-                string srcFile = @"C:\Temp\" + file;
+                string shareFolder = @"\\" + remoteInfo.Address + "\\" + REMOTESHARENAME;
+                string srcFile = filePath + "\\" + file;
 
                 WriteInConsole("Copying file" + srcFile + @" to " + shareFolder + "\\" + file, LogType.info);
 
@@ -151,7 +159,7 @@ namespace MilestoneUpdater
             String quiet_and_silent = " /quiet /install";
             //String quiet_and_silent = "";
 
-            object[] theProcessToRun = { "C:\\" + sharename + "\\" + file + quiet_and_silent, null, null, 0 };
+            object[] theProcessToRun = { REMOTEFOLDER + "\\" + file + quiet_and_silent, null, null, 0 };
 
             ManagementClass theClass = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
             var output = theClass.InvokeMethod("Create", theProcessToRun);
@@ -210,7 +218,7 @@ namespace MilestoneUpdater
             ManagementObjectCollection collection = winShareClass.GetInstances();
             foreach (ManagementObject item in collection)
             {
-                if (Convert.ToString(item["Name"]).Equals(sharename))
+                if (Convert.ToString(item["Name"]).Equals(REMOTESHARENAME))
                 {
                     var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
                     WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
@@ -221,7 +229,7 @@ namespace MilestoneUpdater
 
             WriteInConsole("Removing Share Folder " + remoteInfo.Address, LogType.info);
             //var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q c:\Temp" };
+            object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q "+ REMOTEFOLDER };
             var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
             WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
 
@@ -281,7 +289,11 @@ namespace MilestoneUpdater
             public String Domain { get; set; }
             public String UserName { get; set; }
             public String Password { get; set; }
+
+            public String ServerType { get; set; }
+
         }
+
 
 
         private String ErrorCodeToString(int errorCode)
@@ -319,40 +331,50 @@ namespace MilestoneUpdater
 
 
         ConfigApiClient _configApiClient;
-        IList<KeyValuePair<String, String>> recordingServerList;
+         string ms_Version;
 
         private void ButtonMSConnect_Click(object sender, EventArgs e)
         {
             ServerInfo ms_Info = GetManagementServerInfo();
+
             NetworkCredential nc = new NetworkCredential(ms_Info.UserName, ms_Info.Password, ms_Info.Domain);                               // Build credentials
             Uri uri = new Uri("http://" + ms_Info.Address);
+
+
             _configApiClient = new ConfigApiClient();
             Login(uri, nc, _configApiClient, label_ms_status, buttonMSConnect);
 
             ConfigurationItem managmentServer = _configApiClient.GetItem("/");
             string ms_Name = Array.Find(managmentServer.Properties, ele => ele.Key == "Name").Value;
-            string ms_Version = Array.Find(managmentServer.Properties, ele => ele.Key == "Version").Value;
+            ms_Version = Array.Find(managmentServer.Properties, ele => ele.Key == "Version").Value;
+
+            labelMSName.Text = ms_Name;
+            labelMSVer.Text = ms_Version;
+
+            /// ADD RECORDING SERVERS
+            /// TODO: I DONT NEED API, but is easy.
 
             ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
             FillChildren(recordingServerFolder, _configApiClient);
-
-
-            recordingServerList = new List<KeyValuePair<String, String>>();
+            var recordingServerList = new List<KeyValuePair<String, String>>();
             foreach (ConfigurationItem recordingServer in recordingServerFolder.Children)
-            {
-                recordingServerList.Add(
-                    new KeyValuePair<String, String>(recordingServer.DisplayName
-                    , Array.Find(recordingServer.Properties, ele => ele.Key == "HostName").Value)
-                    );
-            }
-
-            foreach (var item in recordingServerList)
             {
                 int n = dataGridView1.Rows.Add();
 
-                dataGridView1.Rows[n].Cells["DisplayName"].Value = item.Key;
-                dataGridView1.Rows[n].Cells["Address"].Value = item.Value;
+                dataGridView1.Rows[n].Cells["DisplayName"].Value = recordingServer.DisplayName;
+                dataGridView1.Rows[n].Cells["Address"].Value = Array.Find(recordingServer.Properties, ele => ele.Key == "HostName").Value;
+
+                dataGridView1.Rows[n].Cells["ServerType"].Value = HotFixType.RecordingServer;
+                dataGridView1.Rows[n].Cells["Domain"].Value = ms_Info.Domain;
+                dataGridView1.Rows[n].Cells["User"].Value = ms_Info.UserName;
+                dataGridView1.Rows[n].Cells["Password"].Value = ms_Info.Password;
+
             }
+
+            /// TODO DO ADD MORE SERVERS
+            /// 
+
+
 
         }
 
@@ -363,15 +385,13 @@ namespace MilestoneUpdater
             string _pass = textBoxAllPass.Text;
             string _domain = textBoxAllDomain.Text;
 
-            int i = 0;
-            foreach (var item in recordingServerList)
+            for (int i = 0; i < dataGridView1.Rows.Count; i++)
             {
-                dataGridView1.Rows[i].Cells[2].Value = _domain;
-                dataGridView1.Rows[i].Cells[3].Value = _user;
-                dataGridView1.Rows[i].Cells[4].Value = _pass;
-                i++;
-            }
+                dataGridView1.Rows[i].Cells["Domain"].Value = _domain;
+                dataGridView1.Rows[i].Cells["User"].Value = _user;
+                dataGridView1.Rows[i].Cells["Password"].Value = _pass;
 
+            }
         }
 
 
@@ -399,6 +419,7 @@ namespace MilestoneUpdater
             {
                 WriteInConsole("Other error connecting to: " + e.ToString() + ".", LogType.error);
             }
+
 
 
             string _serverAddress = uri.ToString();                           // server URI
@@ -556,10 +577,19 @@ namespace MilestoneUpdater
                         Address = ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
                         Domain = row.Cells["Domain"].Value.ToString(),
                         UserName = row.Cells["User"].Value.ToString(),
-                        Password = row.Cells["Password"].Value.ToString()
+                        Password = row.Cells["Password"].Value.ToString(),
+                        ServerType = row.Cells["ServerType"].Value.ToString(),
                     };
 
-                    CallProcess(remoteInfo);
+                    foreach (DataGridViewRow _row in dataGridViewHotFixList.Rows)
+                    {
+                        if (_row.Cells["HotfixType"].Value.ToString() == remoteInfo.ServerType)
+                        {
+                            String file = _row.Cells["HotfixFile"].Value.ToString();
+                            String filePath = _row.Cells["LocalLocation"].Value.ToString();
+                            CallProcess(remoteInfo, filePath, file);
+                        }
+                    }
                 }
             }
         }
@@ -712,6 +742,121 @@ namespace MilestoneUpdater
             #endregion
 
             #endregion
+        }
+
+
+        private void button1_Click(object sender, EventArgs e2)
+        {
+            /* GEt Json ONLINE 
+            using (WebClient wc = new WebClient())
+            {
+                var json = wc.DownloadString();
+            }
+            */
+
+            if (ms_Version == null)
+            {
+                WriteInConsole("Connect to a server first", LogType.error);
+                return;
+            }
+
+            Hotfix hotfix;
+            using (StreamReader r = new StreamReader("hotfixList.json"))
+            {
+                string json = r.ReadToEnd();
+                List<Hotfix> items = JsonConvert.DeserializeObject<List<Hotfix>>(json);
+                hotfix = items.Find(elem => elem.Version == ms_Version);
+            }
+
+            int n = dataGridViewHotFixList.Rows.Add();
+            dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = HotFixType.RecordingServer;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = hotfix.RS;
+            var files = GetFilesFromFolder(hotfix.RS);
+            String hotfixFile = files[0];
+            String hotfixFileReleaseNote = files[1];
+
+            dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = hotfixFile;
+
+
+        }
+
+        private String[] GetFilesFromFolder(string folder)
+        {
+            String[] result = new String[2];
+
+            using (WebClient client = new WebClient())
+            {
+                string htmlCode = client.DownloadString(folder);
+
+                WebBrowser webBrowser1 = new WebBrowser();
+
+                webBrowser1.DocumentText = htmlCode;
+
+                while (webBrowser1.ReadyState != WebBrowserReadyState.Complete)
+                {
+                    Application.DoEvents();
+                    System.Threading.Thread.Sleep(5);
+                }
+
+                if (webBrowser1.Document != null)
+                {
+                    HtmlElementCollection elems = webBrowser1.Document.GetElementsByTagName("a");
+                    foreach (HtmlElement elem in elems)
+                    {
+                        String hrefStr = elem.GetAttribute("href");
+                        if (hrefStr.Contains("Hotfix"))
+                        {
+                            if (hrefStr.Contains("ReleaseNotes"))
+                            {
+                                result[1] = hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
+
+                            }
+                            else
+                                result[0] = hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
+
+                        }
+                    }
+                }
+
+            }
+
+            return result;
+
+        }
+
+
+        enum HotFixType { 
+        RecordingServer,
+        ManagementServer,
+        EventServer,
+        MovileServer
+        }
+
+        private string StripVersion(string rS)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void buttonDownload_Click(object sender, EventArgs e)
+        {
+            foreach (DataGridViewRow row in dataGridViewHotFixList.Rows)
+            {
+
+                string remoteUri  = row.Cells["HotfixUrl"].Value.ToString(); 
+                string fileName = row.Cells["HotfixFile"].Value.ToString() , myStringWebResource = null;
+                // Create a new WebClient instance.
+                WebClient myWebClient = new WebClient();
+                // Concatenate the domain with the Web resource filename.
+                myStringWebResource = remoteUri + fileName;
+                WriteInConsole("Downloading File "+ fileName + " from  " + myStringWebResource + "...", LogType.message );
+                // Download the Web resource and save it into the current filesystem folder.
+                myWebClient.DownloadFile(myStringWebResource, @"c:\\temp\" + fileName);
+                WriteInConsole("Successfully Downloaded File " + fileName + " from  " + myStringWebResource + "...", LogType.message);
+
+                row.Cells["LocalLocation"].Value = @"c:\temp\";
+
+            }
+
         }
 
     }

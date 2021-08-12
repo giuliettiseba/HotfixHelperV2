@@ -1,0 +1,19 @@
+﻿[
+    {
+      "Version": "21.1.0.2",
+      "MS": "https://download.milestonesys.com/MTSKB/KB000036500/Management%20Server/",
+      "RS": "https://download.milestonesys.com/MTSKB/KB000036500/Recording%20Server/",
+      "MOS": "https://download.milestonesys.com/MTSKB/KB000036500/Mobile%20Server/",
+      "ES": "https://download.milestonesys.com/MTSKB/KB000036500/Evente%20Server/"
+    },
+
+    {
+      "Version": "203",
+      "MS": "https://download.milestonesys.com/MTSKB/KB000036500/Management%20Server/",
+      "RS": "https://download.milestonesys.com/MTSKB/KB000036500/Recording%20Server/",
+      "MOS": "https://download.milestonesys.com/MTSKB/KB000036500/Mobile%20Server/",
+      "ES": "https://download.milestonesys.com/MTSKB/KB000036500/Evente%20Server/"
+    }
+
+  ]
+  
