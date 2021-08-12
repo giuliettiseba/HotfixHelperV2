@@ -3,10 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31321.278
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MilestoneUpdater", "MilestoneUpdater\MilestoneUpdater.csproj", "{5064E7FD-0DA7-4E07-9485-EDD4DEFC14E1}"
-	ProjectSection(ProjectDependencies) = postProject
-		{193D6D74-80C3-454B-8ECC-28FF437CA4A6} = {193D6D74-80C3-454B-8ECC-28FF437CA4A6}
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MilestoneHotfixHelper", "MilestoneUpdater\MilestoneHotfixHelper.csproj", "{5064E7FD-0DA7-4E07-9485-EDD4DEFC14E1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dummyUpdater", "dummyUpdater\dummyUpdater.csproj", "{193D6D74-80C3-454B-8ECC-28FF437CA4A6}"
 EndProject
