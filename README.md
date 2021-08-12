@@ -27,7 +27,7 @@ C) Check that the hotfix was successfully installed
 
 BUGS: 
 
-1) After hotfix installation the trayicon is not visible but process is running.  Microsoft prohibits this explicitly.
+1) After hotfix installation the trayicon is not visible but process is running.  
 For security reasons the Win32_Process.Create method cannot be used to start an interactive process remotely. 
 https://docs.microsoft.com/en-us/windows/win32/cimwin32prov/create-method-in-class-win32-process?redirectedfrom=MSDN
 
