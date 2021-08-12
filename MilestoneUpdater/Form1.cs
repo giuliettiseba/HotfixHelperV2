@@ -45,7 +45,7 @@ namespace MilestoneUpdater
 
 
 
-            TestParameters();                    /// REMOVE ON PRODUCTION !!!!
+            TestParametersLocal();                    /// REMOVE ON PRODUCTION !!!!
         }
 
         private void TestParametersLocal()
@@ -81,8 +81,8 @@ namespace MilestoneUpdater
             // Open Server Connection 
             String filepath = "c:\\Temp";
             String sharename = "Temp";
-            //String file = "Milestone.Hotfix.202108031030.MS.21.12.12177.91.exe";
-            String file = "dummyUpdater.exe";
+            String file = "Milestone.Hotfix.202108031030.MS.21.12.12177.91.exe";
+            //String file = "dummyUpdater.exe";
 
             ConnectionOptions theConnection = new ConnectionOptions();
             theConnection.Authority = "ntlmdomain:" + remoteInfo.Domain;
@@ -93,7 +93,7 @@ namespace MilestoneUpdater
             ManagementScope theScope = new ManagementScope("\\\\" + remoteInfo.Address + "\\root\\cimv2", theConnection);
 
             // create a share folder 
-            // TODO Chech is folder is already created 
+            // TODO Check if folder is already created 
 
             WriteInConsole("Creating Share Folder " + remoteInfo.Address, LogType.info);
             var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
@@ -102,7 +102,8 @@ namespace MilestoneUpdater
             WriteInConsole("Create Share Folder " + ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
 
             // share the folder 
-            // TODO Chech is folder is already shared 
+
+            // TODO Chech if folder is already shared 
             WriteInConsole("Sharing Folder " + remoteInfo.Address, LogType.info);
             var winShareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
             ManagementBaseObject shareParams = SetShareParams(winShareClass, filepath, sharename);
@@ -114,20 +115,16 @@ namespace MilestoneUpdater
             // Copy the hotfix 
             try
             {
-                 string shareFolder = @"\\" + remoteInfo.Address + "\\" + sharename;
+                string shareFolder = @"\\" + remoteInfo.Address + "\\" + sharename;
                 string srcFile = @"C:\Temp\" + file;
 
-                WriteInConsole("Copying file" + srcFile + @" to " + shareFolder+"\\" + file, LogType.info);
-
+                WriteInConsole("Copying file" + srcFile + @" to " + shareFolder + "\\" + file, LogType.info);
 
                 NetworkShare.DisconnectFromShare(shareFolder, true); //Disconnect in case we are currently connected with our credentials;
 
-                NetworkShare.ConnectToShare(shareFolder, remoteInfo.Domain + "\\" + remoteInfo.UserName , remoteInfo.Password); //Connect with the new credentials
+                NetworkShare.ConnectToShare(shareFolder, remoteInfo.Domain + "\\" + remoteInfo.UserName, remoteInfo.Password); //Connect with the new credentials
 
-//                if (!Directory.Exists(@"\\server-a\DBFiles\"))
-//                    Directory.CreateDirectory(@"\\server-a\DBFiles\" + Test);
-  
-                File.Copy(srcFile, shareFolder+ "\\" + file);
+                File.Copy(srcFile, shareFolder + "\\" + file);
 
                 NetworkShare.DisconnectFromShare(shareFolder, false); //Disconnect from the server.
 
@@ -151,8 +148,8 @@ namespace MilestoneUpdater
             WriteInConsole("Executing Hotfix on server " + remoteInfo.Address, LogType.info);
 
 
-            //String quiet_and_silent = " /quiet /install";
-            String quiet_and_silent = "";
+            String quiet_and_silent = " /quiet /install";
+            //String quiet_and_silent = "";
 
             object[] theProcessToRun = { "C:\\" + sharename + "\\" + file + quiet_and_silent, null, null, 0 };
 
@@ -165,6 +162,8 @@ namespace MilestoneUpdater
                 WriteInConsole("Execute Hotfix on server " + remoteInfo.Address + ": " + ErrorCodeToString(Convert.ToInt32(output)), LogType.info);
 
                 WriteInConsole("PID on server  " + remoteInfo.Address + ": " + ProcID, LogType.debug);
+
+                WriteInConsole("Installing hotfix on server: " + remoteInfo.Address, LogType.message);
 
                 WqlEventQuery wQuery = new WqlEventQuery("Select * From __InstanceDeletionEvent Within 1 Where TargetInstance ISA 'Win32_Process'");
 
@@ -185,23 +184,46 @@ namespace MilestoneUpdater
                             }
                         }
                     }
-
                     wWatcher.Stop();
                 }
-
-
-
             }
             catch (Exception ex)
             {
-
                 WriteInConsole(ex.Message, LogType.error);
-
             }
 
             ///
             // TODO: CHECK INSTALATION 
             ///
+
+
+            /// /// /// /// /// 
+            /// HOUSEKEEPING /// 
+            /// /// /// /// /// 
+
+            // UNSHARE FOLDER 
+
+            WriteInConsole("Unsharing Folder " + remoteInfo.Address, LogType.info);
+
+            //var winUnshareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
+            //ManagementBaseObject unshareParams = SetShareParams(winShareClass, filepath, sharename);
+            ManagementObjectCollection collection = winShareClass.GetInstances();
+            foreach (ManagementObject item in collection)
+            {
+                if (Convert.ToString(item["Name"]).Equals(sharename))
+                {
+                    var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
+                    WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
+                }
+            }
+
+            // DELETE FOLDER AND FILE 
+
+            WriteInConsole("Removing Share Folder " + remoteInfo.Address, LogType.info);
+            //var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
+            object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q c:\Temp" };
+            var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
+            WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
 
             return 0;
         }
@@ -212,8 +234,8 @@ namespace MilestoneUpdater
             shareParams["Path"] = filepath;
             shareParams["Name"] = sharename;
             shareParams["Type"] = 0;
-            shareParams["Description"] = "CMC Bootstrap Share";
-            //shareParams["MaximumAllowed"] = 2;
+            shareParams["Description"] = "Milestone HotFix";
+            shareParams["MaximumAllowed"] = 10;
             shareParams["Password"] = null;
 
             NTAccount everyoneAccount = new NTAccount(null, "EVERYONE");
@@ -292,8 +314,8 @@ namespace MilestoneUpdater
                 case 24: return "Unknown device or directory";
                 case 25: return "Net name not found";
                 default: return "ERROR";
+            }
         }
-    }
 
 
         ConfigApiClient _configApiClient;
@@ -527,16 +549,17 @@ namespace MilestoneUpdater
         {
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                if (row.Cells["Address"].Value != null) { 
-                ServerInfo remoteInfo = new ServerInfo()
+                if (row.Cells["Address"].Value != null)
                 {
-                    Address = ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
-                    Domain = row.Cells["Domain"].Value.ToString(),
-                    UserName = row.Cells["User"].Value.ToString(),
-                    Password = row.Cells["Password"].Value.ToString()
-                };
-                
-                CallProcess(remoteInfo);
+                    ServerInfo remoteInfo = new ServerInfo()
+                    {
+                        Address = ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
+                        Domain = row.Cells["Domain"].Value.ToString(),
+                        UserName = row.Cells["User"].Value.ToString(),
+                        Password = row.Cells["Password"].Value.ToString()
+                    };
+
+                    CallProcess(remoteInfo);
                 }
             }
         }
