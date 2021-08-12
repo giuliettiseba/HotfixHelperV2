@@ -1,8 +1,6 @@
 # MilestoneUpdater
 Update Milestone Recording Server From Remote PC 
 
-Initial Commit - 
-
 Algorithm 
 
 1) Use IP, username, domain, and password to establish a connection to the remote server 
