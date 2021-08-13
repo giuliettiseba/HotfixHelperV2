@@ -12,6 +12,8 @@ using System.Management;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using VideoOS.ConfigurationAPI;
 using VideoOS.Platform;
@@ -42,6 +44,7 @@ namespace MilestoneUpdater
         // Folders 
 
         private const string HOTFIXLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/hotfixList.json";
+        private const string DEVICEPACKLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/devicePackList.json";
 
         public MilestoneHotfixHelper()
         {
@@ -55,12 +58,15 @@ namespace MilestoneUpdater
             this.groupBox4.BackColor = BACKCOLOR;
 
 
-       //     TestParametersLocal();                    /// REMOVE ON PRODUCTION !!!!
+            PopulateDevicePack();
+
+            //TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
+            TestParameters();                  /// REMOVE IN PRODUCTION !!!!
         }
 
         private void TestParametersLocal()
         {
-            textBoxMSAddress.Text = "172.18.190.238";
+            textBoxMSAddress.Text = "172.28.131.235";
             textBoxMSDomain.Text = ".";
             textBoxMSUser.Text = "Administrator";
             textBoxMSPass.Text = "Milestone1$";
@@ -82,146 +88,31 @@ namespace MilestoneUpdater
         }
 
         private static String LOCALFOLDER = @"c:\ProgramData\Milestone\HotfixInstaller";
-
         private static String REMOTEFOLDER = @"c:\MilestoneHotfix";
         private static String REMOTESHARENAME = "MilestoneHotfix";
 
-        private int CallProcess(ServerInfo remoteInfo, string filePath, string file)
+
+
+
+        private void CallProcess(ServerInfo remoteInfo, string file)
         {
             WriteInConsole("Start updater on " + remoteInfo.Address, LogType.message);
+            ManagementScope theScope = EstablishConnection(remoteInfo);
+            CreateRemoteFolder(remoteInfo, theScope);
+            ShareRemoteFolder(remoteInfo, theScope);
+            CopyFile(remoteInfo, file);
+            ExecuteRemoteFile(remoteInfo, theScope, file, " /quiet /install");              // RUN IT !!!! AND DO IT QUIET !!! 
+            UnshareRemoteFolder(remoteInfo, theScope);
+            DeleteRemoteFolder(remoteInfo, theScope);
+        }
 
+        private ManagementScope EstablishConnection(ServerInfo remoteInfo)
+        {
             ConnectionOptions theConnection = new ConnectionOptions();
             theConnection.Authority = "ntlmdomain:" + remoteInfo.Domain;
             theConnection.Username = remoteInfo.UserName;
             theConnection.Password = remoteInfo.Password;
-
-            ManagementScope theScope = new ManagementScope("\\\\" + remoteInfo.Address + "\\root\\cimv2", theConnection);
-
-            // create a share folder 
-            // TODO Check if folder is already created 
-
-            WriteInConsole("Creating Share Folder " + remoteInfo.Address, LogType.info);
-            var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };
-            var mdResult = Win32_Process_Class.InvokeMethod("Create", cmdMdTemp);
-            WriteInConsole("Create Share Folder " + ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
-
-            // share the folder 
-
-            // TODO Chech if folder is already shared 
-            WriteInConsole("Sharing Folder " + remoteInfo.Address, LogType.info);
-            var winShareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
-            ManagementBaseObject shareParams = SetShareParams(winShareClass, REMOTEFOLDER, REMOTESHARENAME);
-
-            var outParams = winShareClass.InvokeMethod("Create", shareParams, null);
-            WriteInConsole("Share Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(outParams.Properties["ReturnValue"].Value)), LogType.info);
-
-
-            // Copy the hotfix 
-            try
-            {
-                string shareFolder = @"\\" + remoteInfo.Address + "\\" + REMOTESHARENAME;
-                string srcFile = filePath + "\\" + file;
-
-                WriteInConsole("Copying file" + srcFile + @" to " + shareFolder + "\\" + file, LogType.info);
-
-                NetworkShare.DisconnectFromShare(shareFolder, true); //Disconnect in case we are currently connected with our credentials;
-
-                NetworkShare.ConnectToShare(shareFolder, remoteInfo.Domain + "\\" + remoteInfo.UserName, remoteInfo.Password); //Connect with the new credentials
-
-                File.Copy(srcFile, shareFolder + "\\" + file);
-
-                NetworkShare.DisconnectFromShare(shareFolder, false); //Disconnect from the server.
-
-                WriteInConsole("File Copied", LogType.info);
-            }
-            catch (System.IO.IOException ex)
-            {
-                WriteInConsole(ex.Message, LogType.error);
-            }
-
-
-            // RUN IT !!!! AND DO IT QUIET !!! 
-
-            WriteInConsole("Executing Hotfix on server " + remoteInfo.Address, LogType.info);
-
-            String quiet_and_silent = " /quiet /install";
-
-            object[] theProcessToRun = { REMOTEFOLDER + "\\" + file + quiet_and_silent, null, null, 0 };
-
-            ManagementClass theClass = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            var output = theClass.InvokeMethod("Create", theProcessToRun);
-            try
-            {
-                String ProcID = theProcessToRun[3].ToString();
-
-                WriteInConsole("Execute Hotfix on server " + remoteInfo.Address + ": " + ErrorCodeToString(Convert.ToInt32(output)), LogType.info);
-
-                WriteInConsole("PID on server  " + remoteInfo.Address + ": " + ProcID, LogType.debug);
-
-                WriteInConsole("Installing hotfix on server: " + remoteInfo.Address, LogType.message);
-
-                WqlEventQuery wQuery = new WqlEventQuery("Select * From __InstanceDeletionEvent Within 1 Where TargetInstance ISA 'Win32_Process'");
-
-                using (ManagementEventWatcher wWatcher = new ManagementEventWatcher(theScope, wQuery))
-                {
-                    bool stopped = false;
-
-                    while (stopped == false)
-                    {
-                        using (ManagementBaseObject MBOobj = wWatcher.WaitForNextEvent())
-                        {
-                            if (((ManagementBaseObject)MBOobj["TargetInstance"])["ProcessID"].ToString() == ProcID)
-                            {
-                                // the process has stopped
-                                stopped = true;
-                                WriteInConsole("Update Process Finished on server: " + remoteInfo.Address, LogType.message);
-                                // Upgrade Finish 
-                            }
-                        }
-                    }
-                    wWatcher.Stop();
-                }
-            }
-            catch (Exception ex)
-            {
-                WriteInConsole(ex.Message, LogType.error);
-            }
-
-            ///
-            // TODO: CHECK INSTALATION 
-            ///
-
-
-            /// /// /// ///  /// 
-            /// HOUSEKEEPING /// 
-            /// /// /// ///  /// 
-
-            // UNSHARE FOLDER 
-
-            WriteInConsole("Unsharing Folder " + remoteInfo.Address, LogType.info);
-
-            //var winUnshareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
-            //ManagementBaseObject unshareParams = SetShareParams(winShareClass, filepath, sharename);
-            ManagementObjectCollection collection = winShareClass.GetInstances();
-            foreach (ManagementObject item in collection)
-            {
-                if (Convert.ToString(item["Name"]).Equals(REMOTESHARENAME))
-                {
-                    var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
-                    WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
-                }
-            }
-
-            // DELETE FOLDER AND FILE 
-
-            WriteInConsole("Removing Share Folder " + remoteInfo.Address, LogType.info);
-            //var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q " + REMOTEFOLDER };
-            var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
-            WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
-
-            return 0;
+            return new ManagementScope("\\\\" + remoteInfo.Address + "\\root\\cimv2", theConnection);
         }
 
         private ManagementBaseObject SetShareParams(ManagementClass winShareClass, string filepath, string sharename)
@@ -319,8 +210,7 @@ namespace MilestoneUpdater
             labelMSVer.Text = ms_Version;
 
             /// ADD RECORDING SERVERS
-            /// TODO: I DONT NEED THE API, but is easy.
-
+    
             ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
             FillChildren(recordingServerFolder, _configApiClient);
             var recordingServerList = new List<KeyValuePair<String, String>>();
@@ -373,9 +263,6 @@ namespace MilestoneUpdater
 
             }
         }
-
-
-
 
 
         private void Login(Uri uri, NetworkCredential nc, ConfigApiClient _configApiClient)
@@ -537,8 +424,11 @@ namespace MilestoneUpdater
             error,
         }
 
-        private void RUN_Click(object sender, EventArgs e)
+        private void InstallHotfixesClick(object sender, EventArgs e)
         {
+            var listOfTasks = new List<Task>();
+
+
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if ((bool)row.Cells["Selected"].Value == true)
@@ -552,17 +442,28 @@ namespace MilestoneUpdater
                         ServerType = row.Cells["ServerType"].Value.ToString(),
                     };
 
+                    Cursor.Current = Cursors.WaitCursor;                               // Restore cursor
+
                     foreach (DataGridViewRow _row in dataGridViewHotFixList.Rows)
                     {
-                        if (_row.Cells["LocalLocation"].Value != null && _row.Cells["HotfixType"].Value.ToString() == remoteInfo.ServerType )
+                        if (_row.Cells["LocalLocation"].Value != null && _row.Cells["HotfixType"].Value.ToString() == remoteInfo.ServerType)
                         {
                             String file = _row.Cells["HotfixFile"].Value.ToString();
                             String filePath = _row.Cells["LocalLocation"].Value.ToString();
-                            CallProcess(remoteInfo, filePath, file);
+                            listOfTasks.Add(new Task(() => CallProcess(remoteInfo, file)));
                         }
                     }
                 }
             }
+
+            int _maxDegreeOfParallelism = (int)numericUpDown_MaxDegreeOfParallelism.Value;
+
+            Task tasks = StartAndWaitAllThrottledAsync(listOfTasks, _maxDegreeOfParallelism, -1).ContinueWith(result =>
+            {
+                WriteInConsole("Task(s) complete", LogType.message);
+            });
+            Cursor.Current = Cursors.Default;                               // Restore cursor
+
         }
 
         private void FindHotfixes_Click(object sender, EventArgs e2)
@@ -628,15 +529,20 @@ namespace MilestoneUpdater
                         {
                             if (hrefStr.Contains("ReleaseNotes"))
                             {
-                                result[1] = hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
+                                result[1] = GetFileName(hrefStr);
                             }
                             else
-                                result[0] = hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
+                                result[0] = GetFileName(hrefStr); ;
                         }
                     }
                 }
             }
             return result;
+        }
+
+        private string GetFileName(string hrefStr)
+        {
+            return hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
         }
 
         enum HotFixType
@@ -657,7 +563,7 @@ namespace MilestoneUpdater
             }
         }
 
-        private void buttonDownload_Click(object sender, EventArgs e)
+        private void GetHotfixes_Click(object sender, EventArgs e)
         {
             foreach (DataGridViewRow row in dataGridViewHotFixList.Rows)
             {
@@ -680,6 +586,339 @@ namespace MilestoneUpdater
                 WriteInConsole("Successfully Downloaded File " + fileName + " from  " + myStringWebResource + "...", LogType.message);
                 row.Cells["LocalLocation"].Value = LOCALFOLDER;
             }
+        }
+
+        /// <summary>
+        /// Thread execution control, limit the parallelism 
+        /// </summary>
+        /// <param name="tasksToRun"></param>
+        /// <param name="maxTasksToRunInParallel"></param>
+        /// <param name="timeoutInMilliseconds"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task StartAndWaitAllThrottledAsync(IEnumerable<Task> tasksToRun, int maxTasksToRunInParallel, int timeoutInMilliseconds, CancellationToken cancellationToken = new CancellationToken())
+        {
+            List<Task> tasks = tasksToRun.ToList(); // Convert to a list of tasks so that we don't enumerate over it multiple times needlessly.
+            using (var throttler = new SemaphoreSlim(maxTasksToRunInParallel))
+            {
+                var postTaskTasks = new List<Task>();
+
+                // Have each task notify the throttler when it completes so that it decrements the number of tasks currently running.
+                tasks.ForEach(t => postTaskTasks.Add(t.ContinueWith(tsk => throttler.Release())));
+
+                // Start running each task.
+                foreach (var task in tasks)
+                {
+                    // Increment the number of tasks currently running and wait if too many are running.
+                    await throttler.WaitAsync(timeoutInMilliseconds, cancellationToken);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                    task.Start();
+                }
+
+                // Wait for all of the provided tasks to complete.
+                // We wait on the list of "post" tasks instead of the original tasks, otherwise there is a potential race condition where the throttlers using block is exited before some Tasks have had their "post" action completed, which references the throttler, resulting in an exception due to accessing a disposed object.
+                await Task.WhenAll(postTaskTasks.ToArray());
+            }
+        }
+
+        //private void button4_Click(object sender, EventArgs e)
+
+        private void PopulateDevicePack()
+        {
+            //            dataGridViewDevicePack.Rows.Clear();
+
+            // using (StreamReader r = new StreamReader("hotfixList.json"))
+            // string json = r.ReadToEnd();
+            using (WebClient wc = new WebClient())
+            {
+                try
+                {
+
+                    var json = wc.DownloadString(DEVICEPACKLIST);
+                    //        WriteInConsole("Got device pack list from : " + DEVICEPACKLIST, LogType.info);
+                    List<DevicePack> items = JsonConvert.DeserializeObject<List<DevicePack>>(json);
+
+                    //                    devicePack = items.Find(elem => ms_Version.Contains(elem.Version));
+                    var source = new Dictionary<string, string>();
+
+                    foreach (var item in items)
+                    {
+                        source.Add(item.version, item.link);
+                    }
+
+                    comboBox1.DataSource = new BindingSource(source, null);
+                    comboBox1.DisplayMember = "Key";
+                    comboBox1.ValueMember = "Value";
+
+                }
+                catch (Exception ex)
+                {
+                    WriteInConsole(ex.Message, LogType.error);
+                }
+            }
+
+        }
+
+
+
+        public void DownLoadFileInBackground4(string address, string name)
+        {
+            WebClient client = new WebClient();
+            Uri uri = new Uri(address);
+
+            // Specify a DownloadFileCompleted handler here...
+            //            client.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadFileCallback2);
+            client.DownloadFileCompleted += DownloadFileCompleted(name);
+
+
+            // Specify a progress notification handler.
+            client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressCallback4);
+
+            client.DownloadFileAsync(uri, LOCALFOLDER + "\\" + name);
+        }
+
+        private string downloadedDP;
+        public AsyncCompletedEventHandler DownloadFileCompleted(string name)
+        {
+            Action<object, AsyncCompletedEventArgs> action = (sender, e) =>
+            {
+
+                downloadedDP =  name;
+            };
+            return new AsyncCompletedEventHandler(action);
+        }
+
+
+
+        private void DownloadProgressCallback4(object sender, DownloadProgressChangedEventArgs e)
+        {
+            // Displays the operation identifier, and the transfer progress.
+            //    string progress = (string)e.UserState + " downloaded " + e.BytesReceived + " of " + e.TotalBytesToReceive + " bytes." + " " + e.ProgressPercentage + "% complete...";
+            progressBar1.Value = e.ProgressPercentage;
+
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+
+            string link = "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20116/MilestoneXProtectVMSDriverInstaller116a23027296.exe";//dataGridViewDevicePack.SelectedRows[0].Cells["DownloadLink"].Value.ToString();
+            string name = link.Substring(link.LastIndexOf("/") + 1);
+            DownLoadFileInBackground4(link, name);
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+   //
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if ((bool)row.Cells["Selected"].Value == true)
+                {
+                    ServerInfo remoteInfo = new ServerInfo()
+                    {
+                        Address = ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
+                        Domain = row.Cells["Domain"].Value.ToString(),
+                        UserName = row.Cells["User"].Value.ToString(),
+                        Password = row.Cells["Password"].Value.ToString(),
+                        ServerType = row.Cells["ServerType"].Value.ToString(),
+                    };
+
+                    Cursor.Current = Cursors.WaitCursor;                               // Restore cursor
+                    CallInstallDevicePackProcess(remoteInfo, downloadedDP);
+                    //listOfTasks.Add(new Task(() => );
+                }
+            }
+
+            /*int _maxDegreeOfParallelism = (int)numericUpDown_MaxDegreeOfParallelism.Value;
+
+
+            Task tasks = StartAndWaitAllThrottledAsync(listOfTasks, _maxDegreeOfParallelism, -1).ContinueWith(result =>
+            {
+                
+            });*/
+            WriteInConsole("Task(s) complete", LogType.message);
+            Cursor.Current = Cursors.Default;                               // Restore cursor
+        }
+
+        private void CallInstallDevicePackProcess(ServerInfo remoteInfo, string file)
+        {
+            ManagementScope scope = EstablishConnection(remoteInfo);
+
+            CreateRemoteFolder(remoteInfo, scope);
+            ShareRemoteFolder(remoteInfo, scope);
+            CopyFile(remoteInfo, file);
+            ExecuteRemoteFile(remoteInfo, scope, file, " --quiet");
+            UnshareRemoteFolder(remoteInfo, scope);
+            DeleteRemoteFolder(remoteInfo, scope);
+
+        }
+
+
+
+        ///////////////////
+        // REMOTE LOGIC //
+        ///////////////////
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="theScope"></param>
+
+        private void CreateRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
+        {
+            try
+            {
+                WriteInConsole("Creating Share Folder " + remoteInfo.Address, LogType.info);
+                var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
+                object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };
+                var mdResult = Win32_Process_Class.InvokeMethod("Create", cmdMdTemp);
+                WriteInConsole("Create Share Folder " + ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
+
+            }
+            catch (Exception e)
+            {
+                WriteInConsole(e.Message, LogType.error);
+
+
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="theScope"></param>
+        private void ShareRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
+        {
+            try
+            {
+                WriteInConsole("Sharing Folder " + remoteInfo.Address, LogType.info);
+                var winShareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
+                ManagementBaseObject shareParams = SetShareParams(winShareClass, REMOTEFOLDER, REMOTESHARENAME);
+                var outParams = winShareClass.InvokeMethod("Create", shareParams, null);
+                WriteInConsole("Share Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(outParams.Properties["ReturnValue"].Value)), LogType.info);
+
+            }
+            catch (Exception e)
+            {
+                WriteInConsole(e.Message, LogType.error);
+
+
+            }
+        }
+
+        private void CopyFile(ServerInfo remoteInfo, string file)
+        {
+            // Copy the hotfix 
+            try
+            {
+                string shareFolder = @"\\" + remoteInfo.Address + "\\" + REMOTESHARENAME;
+                string srcFile = LOCALFOLDER + "\\" + file;
+
+                WriteInConsole("Copying file" + srcFile + @" to " + shareFolder + "\\" + file, LogType.info);
+
+                NetworkShare.DisconnectFromShare(shareFolder, true); //Disconnect in case we are currently connected with our credentials;
+                NetworkShare.ConnectToShare(shareFolder, remoteInfo.Domain + "\\" + remoteInfo.UserName, remoteInfo.Password); //Connect with the new credentials
+
+                File.Copy(srcFile, shareFolder + "\\" + file);
+
+                NetworkShare.DisconnectFromShare(shareFolder, false); //Disconnect from the server.
+                WriteInConsole("File Copied", LogType.info);
+            }
+            catch (System.IO.IOException ex)
+            {
+                WriteInConsole(ex.Message, LogType.error);
+            }
+        }
+
+
+        private void ExecuteRemoteFile(ServerInfo remoteInfo, ManagementScope theScope, string file, string args)
+        {
+            WriteInConsole("Executing Hotfix on server " + remoteInfo.Address, LogType.info);
+
+            object[] theProcessToRun = { REMOTEFOLDER + "\\" + file + args, null, null, 0 };
+
+            ManagementClass theClass = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
+            
+            try
+            {
+                var output = theClass.InvokeMethod("Create", theProcessToRun);
+                Thread.Sleep(1000);
+
+                String ProcID = theProcessToRun[3].ToString();
+
+                WriteInConsole("Execute Hotfix on server " + remoteInfo.Address + ": " + ErrorCodeToString(Convert.ToInt32(output)), LogType.info);
+
+                WriteInConsole("PID on server  " + remoteInfo.Address + ": " + ProcID, LogType.debug);
+
+                WriteInConsole("Installing hotfix on server: " + remoteInfo.Address, LogType.message);
+
+                WqlEventQuery wQuery = new WqlEventQuery("Select * From __InstanceDeletionEvent Within 1 Where TargetInstance ISA 'Win32_Process'");
+
+                using (ManagementEventWatcher wWatcher = new ManagementEventWatcher(theScope, wQuery))
+                {
+                    bool stopped = false;
+
+                    while (stopped == false)
+                    {
+                        using (ManagementBaseObject MBOobj = wWatcher.WaitForNextEvent())
+                        {
+                            if (((ManagementBaseObject)MBOobj["TargetInstance"])["ProcessID"].ToString() == ProcID)
+                            {
+                                // the process has stopped
+                                stopped = true;
+                                WriteInConsole("Update Process Finished on server: " + remoteInfo.Address, LogType.message);
+                                // Upgrade Finish 
+                            }
+                        }
+                    }
+                    wWatcher.Stop();
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteInConsole(ex.Message, LogType.error);
+            }
+
+        }
+
+        private void UnshareRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
+        {
+            WriteInConsole("Unsharing Folder " + remoteInfo.Address, LogType.info);
+
+            var win32_Share_class = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
+            ManagementObjectCollection collection = win32_Share_class.GetInstances();
+            
+            foreach (ManagementObject item in collection)
+            {
+                if (Convert.ToString(item["Name"]).Equals(REMOTESHARENAME))
+                {
+                    var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
+                    WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
+                }
+            }
+
+        }
+        private void DeleteRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
+        {
+            WriteInConsole("Removing Share Folder " + remoteInfo.Address, LogType.info);
+            var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
+            object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q " + REMOTEFOLDER };
+            var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
+            WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            downloadedDP = null;
+            progressBar1.Value = 0;
+        }
+
+        private void MilestoneHotfixHelper_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

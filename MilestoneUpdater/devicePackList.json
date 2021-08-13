@@ -1,0 +1,38 @@
+﻿[
+
+  {
+    "version": "11.6a",
+    "type": "dp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20116/MilestoneXProtectVMSDriverInstaller116a23027296.exe"
+  },
+  {
+    "version": "11.5b",
+    "type": "dp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20115b/MilestoneXProtectVMSDriverInstaller115b21885049.exe"
+  },
+  {
+    "version": "11.5a",
+    "type": "dp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20115a/MilestoneXProtectVMSDriverInstaller115a20373729.exe"
+  },
+  {
+    "version": "11.4a",
+    "type": "dp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20114a/MilestoneXProtectVMSDriverInstaller114a50.exe"
+  },
+  {
+    "version": "2.0a",
+    "type": "dp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20113a/MilestoneXProtectVMSLegacyDriverInstaller20a12.exe"
+  },
+  {
+    "version": "2.1a",
+    "type": "ldp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20114a/MilestoneXProtectVMSLegacyDriverInstaller21a6.exe"
+  },
+  {
+    "version": "2.1b",
+    "type": "ldp",
+    "link": "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20116/MilestoneXProtectVMSLegacyDriverInstaller21b23067854.exe"
+  }
+]

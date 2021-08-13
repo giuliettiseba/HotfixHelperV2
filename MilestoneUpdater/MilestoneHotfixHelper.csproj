@@ -53,6 +53,8 @@
   <PropertyGroup>
     <ApplicationIcon>Daco_5496904.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup />
   <ItemGroup>
     <Reference Include="Costura, Version=5.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Costura.Fody.5.4.0\lib\netstandard1.0\Costura.dll</HintPath>
@@ -274,7 +276,8 @@
     <Compile Include="MilestoneHotfixHelper.Designer.cs">
       <DependentUpon>MilestoneHotfixHelper.cs</DependentUpon>
     </Compile>
-    <Compile Include="Utils\hotfixList.cs" />
+    <Compile Include="Utils\DevicePack.cs" />
+    <Compile Include="Utils\Hotfix.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\networkshare.cs" />
@@ -292,6 +295,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="devicePackList.json" />
     <None Include="hotfixList.json" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

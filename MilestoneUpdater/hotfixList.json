@@ -55,9 +55,7 @@
     "RS": "https://download.milestonesys.com/MTSKB/KB000007805/RS/",
     "MOS": "https://download.milestonesys.com/MTSKB/KB000007805/Mobile%20Server/",
     "ES": "https://download.milestonesys.com/MTSKB/KB000007805/ES/"
-  }
-
-  ,
+  },
   {
     "Version": "12.2",
     "MS": "https://download.milestonesys.com/MTSKB/KB000006211/ManagementServer2018R2/",
