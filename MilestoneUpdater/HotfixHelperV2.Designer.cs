@@ -108,7 +108,7 @@ namespace MilestoneUpdater
             this.groupBox1.Controls.Add(this.textBoxMSUser);
             this.groupBox1.Controls.Add(this.buttonMSConnect);
             this.groupBox1.ForeColor = System.Drawing.Color.Snow;
-            this.groupBox1.Location = new System.Drawing.Point(12, 12);
+            this.groupBox1.Location = new System.Drawing.Point(8, 12);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(350, 162);
             this.groupBox1.TabIndex = 3;
@@ -215,9 +215,9 @@ namespace MilestoneUpdater
             // textBox_Console
             // 
             this.textBox_Console.BackColor = System.Drawing.SystemColors.InfoText;
-            this.textBox_Console.Location = new System.Drawing.Point(9, 612);
+            this.textBox_Console.Location = new System.Drawing.Point(8, 612);
             this.textBox_Console.Name = "textBox_Console";
-            this.textBox_Console.Size = new System.Drawing.Size(1037, 249);
+            this.textBox_Console.Size = new System.Drawing.Size(1041, 249);
             this.textBox_Console.TabIndex = 11;
             this.textBox_Console.TabStop = false;
             this.textBox_Console.Text = "";
@@ -227,9 +227,9 @@ namespace MilestoneUpdater
             this.groupBox2.Controls.Add(this.dataGridView1);
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.groupBox2.ForeColor = System.Drawing.Color.Snow;
-            this.groupBox2.Location = new System.Drawing.Point(12, 181);
+            this.groupBox2.Location = new System.Drawing.Point(8, 181);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(1037, 214);
+            this.groupBox2.Size = new System.Drawing.Size(1041, 214);
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Servers List";
@@ -258,7 +258,7 @@ namespace MilestoneUpdater
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.DarkGray;
             dataGridViewCellStyle2.ForeColor = System.Drawing.Color.White;
             this.dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle2;
-            this.dataGridView1.Size = new System.Drawing.Size(1031, 195);
+            this.dataGridView1.Size = new System.Drawing.Size(1035, 195);
             this.dataGridView1.TabIndex = 0;
             this.dataGridView1.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dataGridView1_CellFormatting);
             // 
@@ -310,7 +310,7 @@ namespace MilestoneUpdater
             this.groupBox3.Controls.Add(this.textBoxAllDomain);
             this.groupBox3.Controls.Add(this.textBoxAllUser);
             this.groupBox3.ForeColor = System.Drawing.Color.Snow;
-            this.groupBox3.Location = new System.Drawing.Point(852, 12);
+            this.groupBox3.Location = new System.Drawing.Point(863, 12);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Size = new System.Drawing.Size(186, 163);
             this.groupBox3.TabIndex = 13;
@@ -451,9 +451,9 @@ namespace MilestoneUpdater
             this.groupBoxHotfixes.Controls.Add(this.button2);
             this.groupBoxHotfixes.Enabled = false;
             this.groupBoxHotfixes.ForeColor = System.Drawing.Color.Snow;
-            this.groupBoxHotfixes.Location = new System.Drawing.Point(368, 12);
+            this.groupBoxHotfixes.Location = new System.Drawing.Point(364, 12);
             this.groupBoxHotfixes.Name = "groupBoxHotfixes";
-            this.groupBoxHotfixes.Size = new System.Drawing.Size(478, 163);
+            this.groupBoxHotfixes.Size = new System.Drawing.Size(493, 163);
             this.groupBoxHotfixes.TabIndex = 25;
             this.groupBoxHotfixes.TabStop = false;
             this.groupBoxHotfixes.Text = "Hotfixes ";
@@ -531,7 +531,7 @@ namespace MilestoneUpdater
             // 
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button4.ForeColor = System.Drawing.Color.Snow;
-            this.button4.Location = new System.Drawing.Point(564, 18);
+            this.button4.Location = new System.Drawing.Point(763, 18);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(171, 83);
             this.button4.TabIndex = 27;
@@ -543,7 +543,7 @@ namespace MilestoneUpdater
             // 
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.ForeColor = System.Drawing.Color.Snow;
-            this.button5.Location = new System.Drawing.Point(432, 35);
+            this.button5.Location = new System.Drawing.Point(637, 34);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(120, 21);
             this.button5.TabIndex = 28;
@@ -553,17 +553,18 @@ namespace MilestoneUpdater
             // 
             // progressBar1
             // 
-            this.progressBar1.Location = new System.Drawing.Point(159, 18);
+            this.progressBar1.Location = new System.Drawing.Point(216, 18);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(393, 10);
+            this.progressBar1.Size = new System.Drawing.Size(541, 10);
             this.progressBar1.TabIndex = 29;
+            this.progressBar1.Click += new System.EventHandler(this.progressBar1_Click);
             // 
             // comboBox1
             // 
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(159, 35);
+            this.comboBox1.Location = new System.Drawing.Point(216, 35);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(267, 21);
+            this.comboBox1.Size = new System.Drawing.Size(415, 21);
             this.comboBox1.TabIndex = 30;
             this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
@@ -578,28 +579,28 @@ namespace MilestoneUpdater
             this.groupBox6.ForeColor = System.Drawing.Color.Snow;
             this.groupBox6.Location = new System.Drawing.Point(8, 491);
             this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(750, 115);
+            this.groupBox6.Size = new System.Drawing.Size(1041, 115);
             this.groupBox6.TabIndex = 31;
             this.groupBox6.TabStop = false;
             this.groupBox6.Text = "Device Packs";
-            this.groupBox6.Enter += new System.EventHandler(this.groupBox6_Enter);
             // 
             // button8
             // 
             this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button8.ForeColor = System.Drawing.Color.Snow;
-            this.button8.Location = new System.Drawing.Point(33, 62);
+            this.button8.Location = new System.Drawing.Point(90, 62);
             this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(519, 39);
+            this.button8.Size = new System.Drawing.Size(667, 39);
             this.button8.TabIndex = 32;
             this.button8.Text = "Select DP from Local Storage";
             this.button8.UseVisualStyleBackColor = true;
+            this.button8.Click += new System.EventHandler(this.button8_Click);
             // 
             // button7
             // 
             this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button7.ForeColor = System.Drawing.Color.Snow;
-            this.button7.Location = new System.Drawing.Point(33, 18);
+            this.button7.Location = new System.Drawing.Point(90, 18);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(120, 38);
             this.button7.TabIndex = 31;

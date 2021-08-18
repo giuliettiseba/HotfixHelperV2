@@ -7,8 +7,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{5064E7FD-0DA7-4E07-9485-EDD4DEFC14E1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>HotfixHelper</RootNamespace>
-    <AssemblyName>HotfixHelper</AssemblyName>
+    <RootNamespace>HotfixHelperV2</RootNamespace>
+    <AssemblyName>HotfixHelperV2</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

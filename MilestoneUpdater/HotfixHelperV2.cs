@@ -50,7 +50,7 @@ namespace MilestoneUpdater
             InitializeComponent();
 
             // Apply theme 
-            
+
             this.textBox_Console.BackColor = TEXTBACKCOLOR;
             this.BackColor = BACKCOLOR;
             this.groupBox1.BackColor = BACKCOLOR;
@@ -58,8 +58,7 @@ namespace MilestoneUpdater
             this.groupBox3.BackColor = BACKCOLOR;
             this.groupBox4.BackColor = BACKCOLOR;
 
-            PopulateDevicePack(); 
-
+ 
             TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
             //cTestParameters();                  /// REMOVE IN PRODUCTION !!!!
         }
@@ -70,7 +69,7 @@ namespace MilestoneUpdater
 
         }
 
-            private void TestParametersLocal()
+        private void TestParametersLocal()
         {
             textBoxMSAddress.Text = "10.1.0.192";
             textBoxMSDomain.Text = "MEX-LAB";
@@ -127,7 +126,7 @@ namespace MilestoneUpdater
         }
 
 
-        
+
         private bool IsLocalServer(string address)
         {
             IPHostEntry remoteHostEntry = Dns.GetHostEntry(address);
@@ -241,7 +240,7 @@ namespace MilestoneUpdater
             labelMSVer.Text = ms_Version;
 
             /// ADD RECORDING SERVERS
-    
+
             ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
             FillChildren(recordingServerFolder, _configApiClient);
             var recordingServerList = new List<KeyValuePair<String, String>>();
@@ -395,12 +394,12 @@ namespace MilestoneUpdater
         {
             WriteInConsole("Resolving Name to IP: " + host, LogType.info);
             IPHostEntry hostEntry;
-            hostEntry = Dns.GetHostEntry(host) ;
+            hostEntry = Dns.GetHostEntry(host);
 
             String result = hostEntry.AddressList.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault().ToString();
-            
+
             WriteInConsole("Resolved Name to IP: " + host + " to " + result, LogType.message);
-            
+
             return result;
 
         }
@@ -508,7 +507,7 @@ namespace MilestoneUpdater
                 return;
             }
 
-            
+
             // using (StreamReader r = new StreamReader("hotfixList.json"))
             // string json = r.ReadToEnd();
             using (WebClient wc = new WebClient())
@@ -549,7 +548,7 @@ namespace MilestoneUpdater
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
 
-                    
+
                     string fileName = openFileDialog.FileName;
                     string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
 
@@ -690,7 +689,7 @@ namespace MilestoneUpdater
             }
         }
 
-        private void PopulateDevicePack()
+        private void button7_Click(object sender, EventArgs e)
         {
             using (WebClient wc = new WebClient())
             {
@@ -702,9 +701,9 @@ namespace MilestoneUpdater
 
                     foreach (var item in items)
                     {
-                        source.Add(item.version, item.link);
+                        source.Add(Path.GetFileName(item.link), item.link);
                     }
-
+                    comboBox1.Items.Clear();
                     comboBox1.DataSource = new BindingSource(source, null);
                     comboBox1.DisplayMember = "Key";
                     comboBox1.ValueMember = "Value";
@@ -716,8 +715,6 @@ namespace MilestoneUpdater
             }
 
         }
-
-
 
         public void DownLoadFileInBackground4(string address, string name)
         {
@@ -737,25 +734,18 @@ namespace MilestoneUpdater
             Action<object, AsyncCompletedEventArgs> action = (sender, e) =>
             {
 
-                downloadedDP =  name;
+                downloadedDP = name;
             };
             return new AsyncCompletedEventHandler(action);
         }
 
-
-
         private void DownloadProgressCallback4(object sender, DownloadProgressChangedEventArgs e)
         {
-            // Displays the operation identifier, and the transfer progress.
-            //    string progress = (string)e.UserState + " downloaded " + e.BytesReceived + " of " + e.TotalBytesToReceive + " bytes." + " " + e.ProgressPercentage + "% complete...";
             progressBar1.Value = e.ProgressPercentage;
-
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
-
-            //  string link = "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20116/MilestoneXProtectVMSDriverInstaller116a23027296.exe";//dataGridViewDevicePack.SelectedRows[0].Cells["DownloadLink"].Value.ToString();
             string link = comboBox1.SelectedValue.ToString();
             string name = link.Substring(link.LastIndexOf("/") + 1);
             DownLoadFileInBackground4(link, name);
@@ -763,10 +753,8 @@ namespace MilestoneUpdater
 
         private void button4_Click(object sender, EventArgs e)
         {
-
             var listOfTasks = new List<Task>();
 
-            
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if ((bool)row.Cells["Selected"].Value == true)
@@ -781,7 +769,7 @@ namespace MilestoneUpdater
                     };
 
                     Cursor.Current = Cursors.WaitCursor;                               // Restore cursor
-                    
+
                     listOfTasks.Add(new Task(() => CallInstallDevicePackProcess(remoteInfo, downloadedDP)));
                 }
             }
@@ -799,15 +787,23 @@ namespace MilestoneUpdater
 
         private void CallInstallDevicePackProcess(ServerInfo remoteInfo, string file)
         {
-            ManagementScope scope = EstablishConnection(remoteInfo);
 
-            CreateRemoteFolder(remoteInfo, scope);
-            ShareRemoteFolder(remoteInfo, scope);
-            CopyFile(remoteInfo, file);
-            ExecuteRemoteFile(remoteInfo, scope, file, " --quiet");
-            UnshareRemoteFolder(remoteInfo, scope);
-            DeleteRemoteFolder(remoteInfo, scope);
+            if (IsLocalServer(remoteInfo.Address))
+            {
+                ManagementScope scope = new ManagementScope(@"\\LOCALHOST\root\cimv2");
+                ExecuteRemoteFile(remoteInfo, scope, LOCALFOLDER + "\\" + file, " --quiet");
+            }
+            else
+            {
+                ManagementScope scope = EstablishConnection(remoteInfo);
 
+                CreateRemoteFolder(remoteInfo, scope);
+                ShareRemoteFolder(remoteInfo, scope);
+                CopyFile(remoteInfo, file);
+                ExecuteRemoteFile(remoteInfo, scope, REMOTEFOLDER + "\\" + file, " --quiet");
+                UnshareRemoteFolder(remoteInfo, scope);
+                DeleteRemoteFolder(remoteInfo, scope);
+            }
         }
 
 
@@ -898,7 +894,7 @@ namespace MilestoneUpdater
             object[] theProcessToRun = { file + args, null, null, 0 };
 
             ManagementClass theClass = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            
+
             try
             {
                 var output = theClass.InvokeMethod("Create", theProcessToRun);
@@ -991,12 +987,47 @@ namespace MilestoneUpdater
             progressBar1.Value = 0;
         }
 
-        private void button7_Click(object sender, EventArgs e)
+   
+        private void button8_Click(object sender, EventArgs e)
         {
+
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\";
+                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+
+
+                    string fileName = openFileDialog.FileName;
+                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
+
+                    if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
+                  
+                    
+                    var source = new Dictionary<string, string>();
+
+                    source.Add(Path.GetFileName(fileName), fileNameInstallationDir);
+                    
+
+                    comboBox1.DataSource = new BindingSource(source, null);
+                    comboBox1.DisplayMember = "Key";
+                    comboBox1.ValueMember = "Value";
+                    
+                    
+                    progressBar1.Value = 100;
+                    downloadedDP = Path.GetFileName(fileName);
+
+
+                }
+            }
 
         }
 
-        private void groupBox6_Enter(object sender, EventArgs e)
+        private void progressBar1_Click(object sender, EventArgs e)
         {
 
         }
