@@ -22,7 +22,7 @@ using VideoOS.Platform.SDK.Platform;
 
 namespace MilestoneUpdater
 {
-    public partial class MilestoneHotfixHelper : Form
+    public partial class HotfixHelperV2 : Form
     {
 
         // Join the dark theme 
@@ -41,15 +41,16 @@ namespace MilestoneUpdater
         private const string ManufacturerName = "SGIU";
 
 
-        // Folders 
-
+        // Jsons Repositories
         private const string HOTFIXLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/hotfixList.json";
         private const string DEVICEPACKLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/devicePackList.json";
 
-        public MilestoneHotfixHelper()
+        public HotfixHelperV2()
         {
             InitializeComponent();
 
+            // Apply theme 
+            
             this.textBox_Console.BackColor = TEXTBACKCOLOR;
             this.BackColor = BACKCOLOR;
             this.groupBox1.BackColor = BACKCOLOR;
@@ -57,23 +58,28 @@ namespace MilestoneUpdater
             this.groupBox3.BackColor = BACKCOLOR;
             this.groupBox4.BackColor = BACKCOLOR;
 
+            PopulateDevicePack(); 
 
-            PopulateDevicePack();
-
-            //TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
-            TestParameters();                  /// REMOVE IN PRODUCTION !!!!
+            TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
+            //cTestParameters();                  /// REMOVE IN PRODUCTION !!!!
         }
 
-        private void TestParametersLocal()
+
+        protected override void OnHandleCreated(EventArgs e)
         {
-            textBoxMSAddress.Text = "172.28.131.235";
-            textBoxMSDomain.Text = ".";
-            textBoxMSUser.Text = "Administrator";
+
+        }
+
+            private void TestParametersLocal()
+        {
+            textBoxMSAddress.Text = "10.1.0.192";
+            textBoxMSDomain.Text = "MEX-LAB";
+            textBoxMSUser.Text = "SGIU";
             textBoxMSPass.Text = "Milestone1$";
 
-            textBoxAllDomain.Text = ".";
-            textBoxAllUser.Text = "Administrator";
-            textBoxAllPass.Text = "Milestone1$";
+            textBoxAllDomain.Text = "MILESTONE";
+            textBoxAllUser.Text = "SGIU";
+            textBoxAllPass.Text = "Rfvdfg159753..";
         }
         private void TestParameters()
         {
@@ -97,13 +103,38 @@ namespace MilestoneUpdater
         private void CallProcess(ServerInfo remoteInfo, string file)
         {
             WriteInConsole("Start updater on " + remoteInfo.Address, LogType.message);
-            ManagementScope theScope = EstablishConnection(remoteInfo);
-            CreateRemoteFolder(remoteInfo, theScope);
-            ShareRemoteFolder(remoteInfo, theScope);
-            CopyFile(remoteInfo, file);
-            ExecuteRemoteFile(remoteInfo, theScope, file, " /quiet /install");              // RUN IT !!!! AND DO IT QUIET !!! 
-            UnshareRemoteFolder(remoteInfo, theScope);
-            DeleteRemoteFolder(remoteInfo, theScope);
+
+            if (IsLocalServer(remoteInfo.Address))
+            {
+
+                ManagementScope theScope = new ManagementScope(@"\\LOCALHOST\root\cimv2");
+                ExecuteRemoteFile(remoteInfo, theScope, LOCALFOLDER + "\\" + file, " /quiet /install");
+            }
+            else
+            {
+                ManagementScope theScope = EstablishConnection(remoteInfo);
+                CreateRemoteFolder(remoteInfo, theScope);
+                ShareRemoteFolder(remoteInfo, theScope);
+                CopyFile(remoteInfo, file);
+                ExecuteRemoteFile(remoteInfo, theScope, REMOTEFOLDER + "\\" + file, " /quiet /install");              // RUN IT !!!! AND DO IT QUIET !!! 
+                UnshareRemoteFolder(remoteInfo, theScope);
+                DeleteRemoteFolder(remoteInfo, theScope);
+
+            }
+
+
+
+        }
+
+
+        
+        private bool IsLocalServer(string address)
+        {
+            IPHostEntry remoteHostEntry = Dns.GetHostEntry(address);
+            IPHostEntry localHostEntry = Dns.GetHostEntry(Dns.GetHostName());
+
+            return remoteHostEntry.AddressList.Contains(localHostEntry.AddressList.FirstOrDefault());
+
         }
 
         private ManagementScope EstablishConnection(ServerInfo remoteInfo)
@@ -232,15 +263,13 @@ namespace MilestoneUpdater
             /// TODO DO ADD ES-MOS
             /// 
 
-
-
             Logout(uri, nc, _configApiClient);
-
+            groupBoxHotfixes.Enabled = true;
         }
 
         private void Logout(Uri uri, NetworkCredential nc, ConfigApiClient configApiClient)
         {
-            WriteInConsole("Disconecting from : " + uri + ".", LogType.message);
+            WriteInConsole("Disconecting from : " + uri + ".", LogType.debug);
 
             configApiClient.Close();
             configApiClient = null;
@@ -366,9 +395,12 @@ namespace MilestoneUpdater
         {
             WriteInConsole("Resolving Name to IP: " + host, LogType.info);
             IPHostEntry hostEntry;
-            hostEntry = Dns.GetHostEntry(host);
-            string result = hostEntry.AddressList[0].ToString();
+            hostEntry = Dns.GetHostEntry(host) ;
+
+            String result = hostEntry.AddressList.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault().ToString();
+            
             WriteInConsole("Resolved Name to IP: " + host + " to " + result, LogType.message);
+            
             return result;
 
         }
@@ -460,7 +492,7 @@ namespace MilestoneUpdater
 
             Task tasks = StartAndWaitAllThrottledAsync(listOfTasks, _maxDegreeOfParallelism, -1).ContinueWith(result =>
             {
-                WriteInConsole("Task(s) complete", LogType.message);
+                WriteInConsole("Task(s) completed", LogType.message);
             });
             Cursor.Current = Cursors.Default;                               // Restore cursor
 
@@ -476,7 +508,7 @@ namespace MilestoneUpdater
                 return;
             }
 
-            Hotfix hotfix;
+            
             // using (StreamReader r = new StreamReader("hotfixList.json"))
             // string json = r.ReadToEnd();
             using (WebClient wc = new WebClient())
@@ -486,11 +518,13 @@ namespace MilestoneUpdater
                     var json = wc.DownloadString(HOTFIXLIST);
                     WriteInConsole("Got hotfix list from : " + HOTFIXLIST, LogType.info);
                     List<Hotfix> items = JsonConvert.DeserializeObject<List<Hotfix>>(json);
-                    hotfix = items.Find(elem => ms_Version.Contains(elem.Version));
+
+                    Hotfix hotfix = items.Find(elem => ms_Version.Contains(elem.Version));
+
                     int n = dataGridViewHotFixList.Rows.Add();
                     dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = HotFixType.RecordingServer;
                     dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = hotfix.RS;
-                    var files = GetFilesFromFolder(hotfix.RS);
+                    var files = GetFilesFrom_HTML_DOM(hotfix.RS);
                     String hotfixFile = files[0];
                     String hotfixFileReleaseNote = files[1];
                     dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = hotfixFile;
@@ -503,7 +537,41 @@ namespace MilestoneUpdater
             }
         }
 
-        private String[] GetFilesFromFolder(string folder)
+        private void SelectHotFoxLocalStorage_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\";
+                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+
+                    
+                    string fileName = openFileDialog.FileName;
+                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
+
+                    if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
+
+                    int n = dataGridViewHotFixList.Rows.Add();
+                    dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = HotFixType.RecordingServer;
+                    dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = Path.GetFullPath(fileName);
+
+                    dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = Path.GetFileName(fileName);
+                    dataGridViewHotFixList.Rows[n].Cells["LocalLocation"].Value = fileNameInstallationDir;
+
+
+
+                }
+            }
+        }
+
+
+
+
+        private String[] GetFilesFrom_HTML_DOM(string folder)
         {
             String[] result = new String[2];
 
@@ -622,24 +690,14 @@ namespace MilestoneUpdater
             }
         }
 
-        //private void button4_Click(object sender, EventArgs e)
-
         private void PopulateDevicePack()
         {
-            //            dataGridViewDevicePack.Rows.Clear();
-
-            // using (StreamReader r = new StreamReader("hotfixList.json"))
-            // string json = r.ReadToEnd();
             using (WebClient wc = new WebClient())
             {
                 try
                 {
-
                     var json = wc.DownloadString(DEVICEPACKLIST);
-                    //        WriteInConsole("Got device pack list from : " + DEVICEPACKLIST, LogType.info);
                     List<DevicePack> items = JsonConvert.DeserializeObject<List<DevicePack>>(json);
-
-                    //                    devicePack = items.Find(elem => ms_Version.Contains(elem.Version));
                     var source = new Dictionary<string, string>();
 
                     foreach (var item in items)
@@ -650,7 +708,6 @@ namespace MilestoneUpdater
                     comboBox1.DataSource = new BindingSource(source, null);
                     comboBox1.DisplayMember = "Key";
                     comboBox1.ValueMember = "Value";
-
                 }
                 catch (Exception ex)
                 {
@@ -667,12 +724,8 @@ namespace MilestoneUpdater
             WebClient client = new WebClient();
             Uri uri = new Uri(address);
 
-            // Specify a DownloadFileCompleted handler here...
-            //            client.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadFileCallback2);
             client.DownloadFileCompleted += DownloadFileCompleted(name);
 
-
-            // Specify a progress notification handler.
             client.DownloadProgressChanged += new DownloadProgressChangedEventHandler(DownloadProgressCallback4);
 
             client.DownloadFileAsync(uri, LOCALFOLDER + "\\" + name);
@@ -702,14 +755,18 @@ namespace MilestoneUpdater
         private void button5_Click(object sender, EventArgs e)
         {
 
-            string link = "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20116/MilestoneXProtectVMSDriverInstaller116a23027296.exe";//dataGridViewDevicePack.SelectedRows[0].Cells["DownloadLink"].Value.ToString();
+            //  string link = "https://msdownloadcdn.azureedge.net/files/XProtect%20Device%20Pack%20116/MilestoneXProtectVMSDriverInstaller116a23027296.exe";//dataGridViewDevicePack.SelectedRows[0].Cells["DownloadLink"].Value.ToString();
+            string link = comboBox1.SelectedValue.ToString();
             string name = link.Substring(link.LastIndexOf("/") + 1);
             DownLoadFileInBackground4(link, name);
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-   //
+
+            var listOfTasks = new List<Task>();
+
+            
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if ((bool)row.Cells["Selected"].Value == true)
@@ -724,19 +781,19 @@ namespace MilestoneUpdater
                     };
 
                     Cursor.Current = Cursors.WaitCursor;                               // Restore cursor
-                    CallInstallDevicePackProcess(remoteInfo, downloadedDP);
-                    //listOfTasks.Add(new Task(() => );
+                    
+                    listOfTasks.Add(new Task(() => CallInstallDevicePackProcess(remoteInfo, downloadedDP)));
                 }
             }
 
-            /*int _maxDegreeOfParallelism = (int)numericUpDown_MaxDegreeOfParallelism.Value;
+            int _maxDegreeOfParallelism = (int)numericUpDown_MaxDegreeOfParallelism.Value;
 
 
             Task tasks = StartAndWaitAllThrottledAsync(listOfTasks, _maxDegreeOfParallelism, -1).ContinueWith(result =>
             {
-                
-            });*/
-            WriteInConsole("Task(s) complete", LogType.message);
+                WriteInConsole("Task(s) completed", LogType.message);
+            });
+
             Cursor.Current = Cursors.Default;                               // Restore cursor
         }
 
@@ -838,7 +895,7 @@ namespace MilestoneUpdater
         {
             WriteInConsole("Executing Hotfix on server " + remoteInfo.Address, LogType.info);
 
-            object[] theProcessToRun = { REMOTEFOLDER + "\\" + file + args, null, null, 0 };
+            object[] theProcessToRun = { file + args, null, null, 0 };
 
             ManagementClass theClass = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
             
@@ -886,28 +943,46 @@ namespace MilestoneUpdater
 
         private void UnshareRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
         {
-            WriteInConsole("Unsharing Folder " + remoteInfo.Address, LogType.info);
-
-            var win32_Share_class = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
-            ManagementObjectCollection collection = win32_Share_class.GetInstances();
-            
-            foreach (ManagementObject item in collection)
+            try
             {
-                if (Convert.ToString(item["Name"]).Equals(REMOTESHARENAME))
+                WriteInConsole("Unsharing Folder " + remoteInfo.Address, LogType.info);
+
+                var win32_Share_class = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
+                ManagementObjectCollection collection = win32_Share_class.GetInstances();
+
+                foreach (ManagementObject item in collection)
                 {
-                    var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
-                    WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
+                    if (Convert.ToString(item["Name"]).Equals(REMOTESHARENAME))
+                    {
+                        var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
+                        WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
+                    }
                 }
+
             }
+            catch (Exception ex)
+            {
+                WriteInConsole(ex.Message, LogType.error);
+            }
+
 
         }
         private void DeleteRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
         {
-            WriteInConsole("Removing Share Folder " + remoteInfo.Address, LogType.info);
-            var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-            object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q " + REMOTEFOLDER };
-            var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
-            WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
+            try
+            {
+                WriteInConsole("Removing Share Folder " + remoteInfo.Address, LogType.info);
+                var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
+                object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q " + REMOTEFOLDER };
+                var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
+                WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
+
+            }
+            catch (Exception ex)
+            {
+                WriteInConsole(ex.Message, LogType.error);
+            }
+
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -916,7 +991,12 @@ namespace MilestoneUpdater
             progressBar1.Value = 0;
         }
 
-        private void MilestoneHotfixHelper_Load(object sender, EventArgs e)
+        private void button7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void groupBox6_Enter(object sender, EventArgs e)
         {
 
         }

@@ -1,7 +1,7 @@
 ﻿
 namespace MilestoneUpdater
 {
-    partial class MilestoneHotfixHelper
+    partial class HotfixHelperV2
     {
         /// <summary>
         /// Required designer variable.
@@ -29,22 +29,22 @@ namespace MilestoneUpdater
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MilestoneHotfixHelper));
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(HotfixHelperV2));
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label5 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
+            this.labelMSVer = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
+            this.labelMSName = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.textBoxMSAddress = new System.Windows.Forms.TextBox();
             this.textBoxMSPass = new System.Windows.Forms.TextBox();
             this.textBoxMSDomain = new System.Windows.Forms.TextBox();
             this.textBoxMSUser = new System.Windows.Forms.TextBox();
             this.buttonMSConnect = new System.Windows.Forms.Button();
-            this.labelMSVer = new System.Windows.Forms.Label();
-            this.labelMSName = new System.Windows.Forms.Label();
             this.textBox_Console = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
@@ -69,7 +69,8 @@ namespace MilestoneUpdater
             this.HotfixUrl = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.HotfixFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.LocalLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.groupBoxHotfixes = new System.Windows.Forms.GroupBox();
+            this.button6 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.numericUpDown_MaxDegreeOfParallelism = new System.Windows.Forms.NumericUpDown();
             this.button3 = new System.Windows.Forms.Button();
@@ -80,13 +81,15 @@ namespace MilestoneUpdater
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button7 = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.groupBox3.SuspendLayout();
             this.groupBox4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewHotFixList)).BeginInit();
-            this.groupBox5.SuspendLayout();
+            this.groupBoxHotfixes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_MaxDegreeOfParallelism)).BeginInit();
             this.groupBox6.SuspendLayout();
             this.SuspendLayout();
@@ -130,6 +133,16 @@ namespace MilestoneUpdater
             this.label6.TabIndex = 9;
             this.label6.Text = "Domain";
             // 
+            // labelMSVer
+            // 
+            this.labelMSVer.AutoSize = true;
+            this.labelMSVer.ForeColor = System.Drawing.SystemColors.Control;
+            this.labelMSVer.Location = new System.Drawing.Point(222, 133);
+            this.labelMSVer.Name = "labelMSVer";
+            this.labelMSVer.Size = new System.Drawing.Size(76, 13);
+            this.labelMSVer.TabIndex = 13;
+            this.labelMSVer.Text = "Server Version";
+            // 
             // label7
             // 
             this.label7.AutoSize = true;
@@ -138,6 +151,16 @@ namespace MilestoneUpdater
             this.label7.Size = new System.Drawing.Size(29, 13);
             this.label7.TabIndex = 10;
             this.label7.Text = "User";
+            // 
+            // labelMSName
+            // 
+            this.labelMSName.AutoSize = true;
+            this.labelMSName.ForeColor = System.Drawing.SystemColors.Control;
+            this.labelMSName.Location = new System.Drawing.Point(226, 109);
+            this.labelMSName.Name = "labelMSName";
+            this.labelMSName.Size = new System.Drawing.Size(69, 13);
+            this.labelMSName.TabIndex = 13;
+            this.labelMSName.Text = "Server Name";
             // 
             // label8
             // 
@@ -189,32 +212,12 @@ namespace MilestoneUpdater
             this.buttonMSConnect.UseVisualStyleBackColor = true;
             this.buttonMSConnect.Click += new System.EventHandler(this.ButtonMSConnect_Click);
             // 
-            // labelMSVer
-            // 
-            this.labelMSVer.AutoSize = true;
-            this.labelMSVer.ForeColor = System.Drawing.SystemColors.Control;
-            this.labelMSVer.Location = new System.Drawing.Point(222, 133);
-            this.labelMSVer.Name = "labelMSVer";
-            this.labelMSVer.Size = new System.Drawing.Size(76, 13);
-            this.labelMSVer.TabIndex = 13;
-            this.labelMSVer.Text = "Server Version";
-            // 
-            // labelMSName
-            // 
-            this.labelMSName.AutoSize = true;
-            this.labelMSName.ForeColor = System.Drawing.SystemColors.Control;
-            this.labelMSName.Location = new System.Drawing.Point(226, 109);
-            this.labelMSName.Name = "labelMSName";
-            this.labelMSName.Size = new System.Drawing.Size(69, 13);
-            this.labelMSName.TabIndex = 13;
-            this.labelMSName.Text = "Server Name";
-            // 
             // textBox_Console
             // 
             this.textBox_Console.BackColor = System.Drawing.SystemColors.InfoText;
-            this.textBox_Console.Location = new System.Drawing.Point(9, 567);
+            this.textBox_Console.Location = new System.Drawing.Point(9, 612);
             this.textBox_Console.Name = "textBox_Console";
-            this.textBox_Console.Size = new System.Drawing.Size(1037, 207);
+            this.textBox_Console.Size = new System.Drawing.Size(1037, 249);
             this.textBox_Console.TabIndex = 11;
             this.textBox_Console.TabStop = false;
             this.textBox_Console.Text = "";
@@ -252,9 +255,9 @@ namespace MilestoneUpdater
             this.dataGridView1.Location = new System.Drawing.Point(3, 16);
             this.dataGridView1.Name = "dataGridView1";
             this.dataGridView1.RowHeadersVisible = false;
-            dataGridViewCellStyle8.BackColor = System.Drawing.Color.DarkGray;
-            dataGridViewCellStyle8.ForeColor = System.Drawing.Color.White;
-            this.dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle2.BackColor = System.Drawing.Color.DarkGray;
+            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.White;
+            this.dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle2;
             this.dataGridView1.Size = new System.Drawing.Size(1031, 195);
             this.dataGridView1.TabIndex = 0;
             this.dataGridView1.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dataGridView1_CellFormatting);
@@ -287,8 +290,8 @@ namespace MilestoneUpdater
             // 
             // Password
             // 
-            dataGridViewCellStyle7.NullValue = null;
-            this.Password.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle1.NullValue = null;
+            this.Password.DefaultCellStyle = dataGridViewCellStyle1;
             this.Password.HeaderText = "Password";
             this.Password.Name = "Password";
             // 
@@ -405,9 +408,9 @@ namespace MilestoneUpdater
             this.dataGridViewHotFixList.Location = new System.Drawing.Point(3, 16);
             this.dataGridViewHotFixList.Name = "dataGridViewHotFixList";
             this.dataGridViewHotFixList.RowHeadersVisible = false;
-            dataGridViewCellStyle9.BackColor = System.Drawing.Color.DimGray;
-            dataGridViewCellStyle9.ForeColor = System.Drawing.Color.White;
-            this.dataGridViewHotFixList.RowsDefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle3.BackColor = System.Drawing.Color.DimGray;
+            dataGridViewCellStyle3.ForeColor = System.Drawing.Color.White;
+            this.dataGridViewHotFixList.RowsDefaultCellStyle = dataGridViewCellStyle3;
             this.dataGridViewHotFixList.Size = new System.Drawing.Size(1035, 65);
             this.dataGridViewHotFixList.TabIndex = 0;
             // 
@@ -438,25 +441,39 @@ namespace MilestoneUpdater
             this.LocalLocation.HeaderText = "LocalLocation";
             this.LocalLocation.Name = "LocalLocation";
             // 
-            // groupBox5
+            // groupBoxHotfixes
             // 
-            this.groupBox5.Controls.Add(this.label1);
-            this.groupBox5.Controls.Add(this.numericUpDown_MaxDegreeOfParallelism);
-            this.groupBox5.Controls.Add(this.button3);
-            this.groupBox5.Controls.Add(this.button1);
-            this.groupBox5.Controls.Add(this.button2);
-            this.groupBox5.ForeColor = System.Drawing.Color.Snow;
-            this.groupBox5.Location = new System.Drawing.Point(368, 12);
-            this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(478, 163);
-            this.groupBox5.TabIndex = 25;
-            this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "Hot Fixes ";
+            this.groupBoxHotfixes.Controls.Add(this.button6);
+            this.groupBoxHotfixes.Controls.Add(this.label1);
+            this.groupBoxHotfixes.Controls.Add(this.numericUpDown_MaxDegreeOfParallelism);
+            this.groupBoxHotfixes.Controls.Add(this.button3);
+            this.groupBoxHotfixes.Controls.Add(this.button1);
+            this.groupBoxHotfixes.Controls.Add(this.button2);
+            this.groupBoxHotfixes.Enabled = false;
+            this.groupBoxHotfixes.ForeColor = System.Drawing.Color.Snow;
+            this.groupBoxHotfixes.Location = new System.Drawing.Point(368, 12);
+            this.groupBoxHotfixes.Name = "groupBoxHotfixes";
+            this.groupBoxHotfixes.Size = new System.Drawing.Size(478, 163);
+            this.groupBoxHotfixes.TabIndex = 25;
+            this.groupBoxHotfixes.TabStop = false;
+            this.groupBoxHotfixes.Text = "Hotfixes ";
+            // 
+            // button6
+            // 
+            this.button6.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button6.ForeColor = System.Drawing.Color.Snow;
+            this.button6.Location = new System.Drawing.Point(21, 77);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(255, 49);
+            this.button6.TabIndex = 27;
+            this.button6.Text = "Select Hotfix from Local Storage";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.SelectHotFoxLocalStorage_Click);
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(94, 95);
+            this.label1.Location = new System.Drawing.Point(110, 139);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(108, 13);
             this.label1.TabIndex = 25;
@@ -464,7 +481,7 @@ namespace MilestoneUpdater
             // 
             // numericUpDown_MaxDegreeOfParallelism
             // 
-            this.numericUpDown_MaxDegreeOfParallelism.Location = new System.Drawing.Point(243, 95);
+            this.numericUpDown_MaxDegreeOfParallelism.Location = new System.Drawing.Point(224, 135);
             this.numericUpDown_MaxDegreeOfParallelism.Name = "numericUpDown_MaxDegreeOfParallelism";
             this.numericUpDown_MaxDegreeOfParallelism.Size = new System.Drawing.Size(81, 20);
             this.numericUpDown_MaxDegreeOfParallelism.TabIndex = 26;
@@ -478,11 +495,11 @@ namespace MilestoneUpdater
             // 
             this.button3.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button3.ForeColor = System.Drawing.Color.Snow;
-            this.button3.Location = new System.Drawing.Point(156, 20);
+            this.button3.Location = new System.Drawing.Point(147, 20);
             this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(120, 60);
+            this.button3.Size = new System.Drawing.Size(129, 53);
             this.button3.TabIndex = 18;
-            this.button3.Text = "Get Hotfixes";
+            this.button3.Text = "Download Hotfixes";
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.GetHotfixes_Click);
             // 
@@ -492,9 +509,9 @@ namespace MilestoneUpdater
             this.button1.ForeColor = System.Drawing.Color.Snow;
             this.button1.Location = new System.Drawing.Point(21, 20);
             this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(120, 60);
+            this.button1.Size = new System.Drawing.Size(120, 53);
             this.button1.TabIndex = 17;
-            this.button1.Text = "Find Hotfixes";
+            this.button1.Text = "Find Hotfixes Online";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.FindHotfixes_Click);
             // 
@@ -502,9 +519,9 @@ namespace MilestoneUpdater
             // 
             this.button2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button2.ForeColor = System.Drawing.Color.Snow;
-            this.button2.Location = new System.Drawing.Point(291, 20);
+            this.button2.Location = new System.Drawing.Point(282, 19);
             this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(120, 60);
+            this.button2.Size = new System.Drawing.Size(174, 107);
             this.button2.TabIndex = 16;
             this.button2.Text = "Install Hotfixes";
             this.button2.UseVisualStyleBackColor = true;
@@ -514,9 +531,9 @@ namespace MilestoneUpdater
             // 
             this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button4.ForeColor = System.Drawing.Color.Snow;
-            this.button4.Location = new System.Drawing.Point(416, 20);
+            this.button4.Location = new System.Drawing.Point(564, 18);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(101, 37);
+            this.button4.Size = new System.Drawing.Size(171, 83);
             this.button4.TabIndex = 27;
             this.button4.Text = "Install Device Pack";
             this.button4.UseVisualStyleBackColor = true;
@@ -526,7 +543,7 @@ namespace MilestoneUpdater
             // 
             this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.button5.ForeColor = System.Drawing.Color.Snow;
-            this.button5.Location = new System.Drawing.Point(290, 36);
+            this.button5.Location = new System.Drawing.Point(432, 35);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(120, 21);
             this.button5.TabIndex = 28;
@@ -536,7 +553,7 @@ namespace MilestoneUpdater
             // 
             // progressBar1
             // 
-            this.progressBar1.Location = new System.Drawing.Point(17, 20);
+            this.progressBar1.Location = new System.Drawing.Point(159, 18);
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(393, 10);
             this.progressBar1.TabIndex = 29;
@@ -544,7 +561,7 @@ namespace MilestoneUpdater
             // comboBox1
             // 
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(17, 36);
+            this.comboBox1.Location = new System.Drawing.Point(159, 35);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(267, 21);
             this.comboBox1.TabIndex = 30;
@@ -552,6 +569,8 @@ namespace MilestoneUpdater
             // 
             // groupBox6
             // 
+            this.groupBox6.Controls.Add(this.button8);
+            this.groupBox6.Controls.Add(this.button7);
             this.groupBox6.Controls.Add(this.comboBox1);
             this.groupBox6.Controls.Add(this.button4);
             this.groupBox6.Controls.Add(this.progressBar1);
@@ -559,28 +578,51 @@ namespace MilestoneUpdater
             this.groupBox6.ForeColor = System.Drawing.Color.Snow;
             this.groupBox6.Location = new System.Drawing.Point(8, 491);
             this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(535, 70);
+            this.groupBox6.Size = new System.Drawing.Size(750, 115);
             this.groupBox6.TabIndex = 31;
             this.groupBox6.TabStop = false;
             this.groupBox6.Text = "Device Packs";
+            this.groupBox6.Enter += new System.EventHandler(this.groupBox6_Enter);
             // 
-            // MilestoneHotfixHelper
+            // button8
+            // 
+            this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button8.ForeColor = System.Drawing.Color.Snow;
+            this.button8.Location = new System.Drawing.Point(33, 62);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(519, 39);
+            this.button8.TabIndex = 32;
+            this.button8.Text = "Select DP from Local Storage";
+            this.button8.UseVisualStyleBackColor = true;
+            // 
+            // button7
+            // 
+            this.button7.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.button7.ForeColor = System.Drawing.Color.Snow;
+            this.button7.Location = new System.Drawing.Point(33, 18);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(120, 38);
+            this.button7.TabIndex = 31;
+            this.button7.Text = "Find DP Online";
+            this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
+            // 
+            // HotfixHelperV2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.ClientSize = new System.Drawing.Size(1060, 782);
+            this.ClientSize = new System.Drawing.Size(1060, 873);
             this.Controls.Add(this.groupBox6);
-            this.Controls.Add(this.groupBox5);
+            this.Controls.Add(this.groupBoxHotfixes);
             this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.textBox_Console);
             this.Controls.Add(this.groupBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "MilestoneHotfixHelper";
-            this.Text = "Milestone Hotfix Helper";
-            this.Load += new System.EventHandler(this.MilestoneHotfixHelper_Load);
+            this.Name = "HotfixHelperV2";
+            this.Text = "Hotfix Helper V2";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
@@ -589,8 +631,8 @@ namespace MilestoneUpdater
             this.groupBox3.PerformLayout();
             this.groupBox4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewHotFixList)).EndInit();
-            this.groupBox5.ResumeLayout(false);
-            this.groupBox5.PerformLayout();
+            this.groupBoxHotfixes.ResumeLayout(false);
+            this.groupBoxHotfixes.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown_MaxDegreeOfParallelism)).EndInit();
             this.groupBox6.ResumeLayout(false);
             this.ResumeLayout(false);
@@ -634,7 +676,7 @@ namespace MilestoneUpdater
         private System.Windows.Forms.DataGridViewTextBoxColumn HotfixUrl;
         private System.Windows.Forms.DataGridViewTextBoxColumn HotfixFile;
         private System.Windows.Forms.DataGridViewTextBoxColumn LocalLocation;
-        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.GroupBox groupBoxHotfixes;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown numericUpDown_MaxDegreeOfParallelism;
         private System.Windows.Forms.Button button3;
@@ -646,6 +688,9 @@ namespace MilestoneUpdater
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.ComboBox comboBox1;
         private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Button button7;
     }
 }
 

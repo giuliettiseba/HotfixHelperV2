@@ -7,8 +7,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{5064E7FD-0DA7-4E07-9485-EDD4DEFC14E1}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <RootNamespace>MilestoneHotfixHelper</RootNamespace>
-    <AssemblyName>MilestoneHotfixHelper</AssemblyName>
+    <RootNamespace>HotfixHelper</RootNamespace>
+    <AssemblyName>HotfixHelper</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -45,7 +45,7 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>..\..\..\..\OneDrive - Milestone Systems\Desktop\Tools\HotfixHelperV2\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -55,6 +55,9 @@
   </PropertyGroup>
   <PropertyGroup />
   <PropertyGroup />
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Costura, Version=5.4.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Costura.Fody.5.4.0\lib\netstandard1.0\Costura.dll</HintPath>
@@ -270,11 +273,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Utils\ConfigApiClient.cs" />
-    <Compile Include="MilestoneHotfixHelper.cs">
+    <Compile Include="HotfixHelperV2.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="MilestoneHotfixHelper.Designer.cs">
-      <DependentUpon>MilestoneHotfixHelper.cs</DependentUpon>
+    <Compile Include="HotfixHelperV2.Designer.cs">
+      <DependentUpon>HotfixHelperV2.cs</DependentUpon>
     </Compile>
     <Compile Include="Utils\DevicePack.cs" />
     <Compile Include="Utils\Hotfix.cs" />
@@ -282,8 +285,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utils\networkshare.cs" />
     <Compile Include="Utils\ServerInfo.cs" />
-    <EmbeddedResource Include="MilestoneHotfixHelper.resx">
-      <DependentUpon>MilestoneHotfixHelper.cs</DependentUpon>
+    <EmbeddedResource Include="HotfixHelperV2.resx">
+      <DependentUpon>HotfixHelperV2.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -295,6 +298,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include="app.manifest" />
     <None Include="devicePackList.json" />
     <None Include="hotfixList.json" />
     <None Include="packages.config" />
