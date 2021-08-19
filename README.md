@@ -15,9 +15,8 @@ Algorithm
 
 Next steps.
 
-1) get RS list from the XML
-2) No internet? Manual map hotfix file from a directory 
-3) Check that the hotfix was successfully installed
+1) get RS list from an XML
+2) Check that the hotfix was successfully installed
 
 BUGS: 
 1) After hotfix installation the trayicon is not visible but process is running.  
