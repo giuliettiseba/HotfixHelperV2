@@ -13,6 +13,8 @@ namespace MilestoneUpdater
         public string RS { get; set; }
         public string MOS { get; set; }
         public string ES { get; set; }
+
+
     }
 
 }

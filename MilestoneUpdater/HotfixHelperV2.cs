@@ -1,4 +1,5 @@
 ﻿using ConfigApi;
+using HotfixHelperV2.Utils;
 using MilestoneHotfixHelper.Utils;
 using Newtonsoft.Json;
 using System;
@@ -10,14 +11,10 @@ using System.IO;
 using System.Linq;
 using System.Management;
 using System.Net;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using VideoOS.ConfigurationAPI;
-using VideoOS.Platform;
-using VideoOS.Platform.Messaging;
 using VideoOS.Platform.SDK.Platform;
 
 namespace MilestoneUpdater
@@ -34,16 +31,19 @@ namespace MilestoneUpdater
         readonly Color ERRORCOLOR = System.Drawing.ColorTranslator.FromHtml("#B0572C");
 
 
-        // SDK info
-        private static readonly Guid IntegrationId = new Guid("CD52BF80-A58B-4A35-BF30-159753159753");
-        private const string IntegrationName = "MilestoneUpdater";
-        private const string Version = "1.0";
-        private const string ManufacturerName = "SGIU";
 
 
         // Jsons Repositories
         private const string HOTFIXLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/hotfixList.json";
         private const string DEVICEPACKLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/devicePackList.json";
+
+        // Folder locations 
+        private static String LOCALFOLDER = @"C:\ProgramData\Milestone\HotfixInstaller";
+        private static String REMOTEFOLDER = @"C:\MilestoneHotfix";
+        private static String REMOTESHARENAME = "MilestoneHotfix";
+
+        string ms_Version; // DO I NEED THIS GLOBAL ??
+
 
         public HotfixHelperV2()
         {
@@ -58,7 +58,6 @@ namespace MilestoneUpdater
             this.groupBox3.BackColor = BACKCOLOR;
             this.groupBox4.BackColor = BACKCOLOR;
 
- 
             TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
             //cTestParameters();                  /// REMOVE IN PRODUCTION !!!!
         }
@@ -71,14 +70,14 @@ namespace MilestoneUpdater
 
         private void TestParametersLocal()
         {
-            textBoxMSAddress.Text = "10.1.0.192";
-            textBoxMSDomain.Text = "MEX-LAB";
-            textBoxMSUser.Text = "SGIU";
+            textBoxMSAddress.Text = "172.28.131.235";
+            textBoxMSDomain.Text = ".";
+            textBoxMSUser.Text = "Administrator";
             textBoxMSPass.Text = "Milestone1$";
 
-            textBoxAllDomain.Text = "MILESTONE";
+            textBoxAllDomain.Text = "MEX-LAB";
             textBoxAllUser.Text = "SGIU";
-            textBoxAllPass.Text = "Rfvdfg159753..";
+            textBoxAllPass.Text = "Milestone1$";
         }
         private void TestParameters()
         {
@@ -92,132 +91,16 @@ namespace MilestoneUpdater
             textBoxAllPass.Text = "Milestone1$";
         }
 
-        private static String LOCALFOLDER = @"c:\ProgramData\Milestone\HotfixInstaller";
-        private static String REMOTEFOLDER = @"c:\MilestoneHotfix";
-        private static String REMOTESHARENAME = "MilestoneHotfix";
 
 
 
-
-        private void CallProcess(ServerInfo remoteInfo, string file)
+        private void GetRecordingServers_Button_Click(object sender, EventArgs e)
         {
-            WriteInConsole("Start updater on " + remoteInfo.Address, LogType.message);
 
-            if (IsLocalServer(remoteInfo.Address))
-            {
+            // Clear the dataGrids 
+            serversDataGridView.Rows.Clear();
+            dataGridViewHotFixList.Rows.Clear();
 
-                ManagementScope theScope = new ManagementScope(@"\\LOCALHOST\root\cimv2");
-                ExecuteRemoteFile(remoteInfo, theScope, LOCALFOLDER + "\\" + file, " /quiet /install");
-            }
-            else
-            {
-                ManagementScope theScope = EstablishConnection(remoteInfo);
-                CreateRemoteFolder(remoteInfo, theScope);
-                ShareRemoteFolder(remoteInfo, theScope);
-                CopyFile(remoteInfo, file);
-                ExecuteRemoteFile(remoteInfo, theScope, REMOTEFOLDER + "\\" + file, " /quiet /install");              // RUN IT !!!! AND DO IT QUIET !!! 
-                UnshareRemoteFolder(remoteInfo, theScope);
-                DeleteRemoteFolder(remoteInfo, theScope);
-
-            }
-
-
-
-        }
-
-
-
-        private bool IsLocalServer(string address)
-        {
-            IPHostEntry remoteHostEntry = Dns.GetHostEntry(address);
-            IPHostEntry localHostEntry = Dns.GetHostEntry(Dns.GetHostName());
-
-            return remoteHostEntry.AddressList.Contains(localHostEntry.AddressList.FirstOrDefault());
-
-        }
-
-        private ManagementScope EstablishConnection(ServerInfo remoteInfo)
-        {
-            ConnectionOptions theConnection = new ConnectionOptions();
-            theConnection.Authority = "ntlmdomain:" + remoteInfo.Domain;
-            theConnection.Username = remoteInfo.UserName;
-            theConnection.Password = remoteInfo.Password;
-            return new ManagementScope("\\\\" + remoteInfo.Address + "\\root\\cimv2", theConnection);
-        }
-
-        private ManagementBaseObject SetShareParams(ManagementClass winShareClass, string filepath, string sharename)
-        {
-            var shareParams = winShareClass.GetMethodParameters("Create");
-            shareParams["Path"] = filepath;
-            shareParams["Name"] = sharename;
-            shareParams["Type"] = 0;
-            shareParams["Description"] = "Milestone HotFix";
-            shareParams["MaximumAllowed"] = 10;
-            shareParams["Password"] = null;
-
-            NTAccount everyoneAccount = new NTAccount(null, "EVERYONE");
-            SecurityIdentifier sid = (SecurityIdentifier)everyoneAccount.Translate(typeof(SecurityIdentifier));
-            byte[] sidArray = new byte[sid.BinaryLength];
-            sid.GetBinaryForm(sidArray, 0);
-
-            ManagementObject everyone = new ManagementClass("Win32_Trustee");
-            everyone["Domain"] = null;
-            everyone["Name"] = "EVERYONE";
-            everyone["SID"] = sidArray;
-
-            ManagementObject dacl = new ManagementClass("Win32_Ace");
-            dacl["AccessMask"] = 2032127;
-            dacl["AceFlags"] = 3;
-            dacl["AceType"] = 0;
-            dacl["Trustee"] = everyone;
-
-            ManagementObject securityDescriptor = new ManagementClass("Win32_SecurityDescriptor");
-            securityDescriptor["ControlFlags"] = 4; //SE_DACL_PRESENT 
-            securityDescriptor["DACL"] = new object[] { dacl };
-
-            shareParams["Access"] = securityDescriptor;
-            return shareParams;
-        }
-
-        private String ErrorCodeToString(int errorCode)
-        {
-            switch (errorCode)
-            {
-                case 0: return "Successful Completion";
-                case 2: return "Access Denied";
-                case 3: return "Insufficient Privilege";
-                case 8: return "Unknown Failure";
-                case 9: return "Path not found";
-                case 21: return "Invalid parameter";
-                default: return "ERROR";
-            }
-        }
-
-
-        private String ShareFolderErrorCodeToString(int errorCode)
-        {
-            switch (errorCode)
-            {
-                case 0: return "Successful Completion";
-                case 2: return "Access Denied";
-                case 8: return "Unknown failure";
-                case 9: return "Invalid name";
-                case 10: return "Invalid level";
-                case 21: return "Invalid parameter";
-                case 22: return "Duplicate share";
-                case 23: return "Redirected path";
-                case 24: return "Unknown device or directory";
-                case 25: return "Net name not found";
-                default: return "ERROR";
-            }
-        }
-
-
-        ConfigApiClient _configApiClient;
-        string ms_Version;
-
-        private void ButtonMSConnect_Click(object sender, EventArgs e)
-        {
             ServerInfo ms_Info = new ServerInfo()
             {
                 Address = textBoxMSAddress.Text,
@@ -228,85 +111,13 @@ namespace MilestoneUpdater
 
             NetworkCredential nc = new NetworkCredential(ms_Info.UserName, ms_Info.Password, ms_Info.Domain);                               // Build credentials
             Uri uri = new Uri("http://" + ms_Info.Address);
-
-            _configApiClient = new ConfigApiClient();
-            Login(uri, nc, _configApiClient);
-
-            ConfigurationItem managmentServer = _configApiClient.GetItem("/");
-            string ms_Name = Array.Find(managmentServer.Properties, ele => ele.Key == "Name").Value;
-            ms_Version = Array.Find(managmentServer.Properties, ele => ele.Key == "Version").Value;
-
-            labelMSName.Text = ms_Name;
-            labelMSVer.Text = ms_Version;
-
-            /// ADD RECORDING SERVERS
-
-            ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
-            FillChildren(recordingServerFolder, _configApiClient);
-            var recordingServerList = new List<KeyValuePair<String, String>>();
-            foreach (ConfigurationItem recordingServer in recordingServerFolder.Children)
-            {
-                int n = dataGridView1.Rows.Add();
-
-                dataGridView1.Rows[n].Cells["DisplayName"].Value = recordingServer.DisplayName;
-                dataGridView1.Rows[n].Cells["Address"].Value = Array.Find(recordingServer.Properties, ele => ele.Key == "HostName").Value;
-
-                dataGridView1.Rows[n].Cells["ServerType"].Value = HotFixType.RecordingServer;
-                dataGridView1.Rows[n].Cells["Domain"].Value = ms_Info.Domain;
-                dataGridView1.Rows[n].Cells["User"].Value = ms_Info.UserName;
-                dataGridView1.Rows[n].Cells["Password"].Value = ms_Info.Password;
-                dataGridView1.Rows[n].Cells["Selected"].Value = true;
-
-            }
-
-            /// TODO DO ADD ES-MOS
-            /// 
-
-            Logout(uri, nc, _configApiClient);
-            groupBoxHotfixes.Enabled = true;
-        }
-
-        private void Logout(Uri uri, NetworkCredential nc, ConfigApiClient configApiClient)
-        {
-            WriteInConsole("Disconecting from : " + uri + ".", LogType.debug);
-
-            configApiClient.Close();
-            configApiClient = null;
-
-            VideoOS.Platform.SDK.Environment.Logout();
-            VideoOS.Platform.SDK.Environment.RemoveAllServers();
-        }
-
-        private void buttonAllCredentials_Click(object sender, EventArgs e)
-        {
-            string _user = textBoxAllUser.Text;
-            string _pass = textBoxAllPass.Text;
-            string _domain = textBoxAllDomain.Text;
-
-            for (int i = 0; i < dataGridView1.Rows.Count; i++)
-            {
-                dataGridView1.Rows[i].Cells["Domain"].Value = _domain;
-                dataGridView1.Rows[i].Cells["User"].Value = _user;
-                dataGridView1.Rows[i].Cells["Password"].Value = _pass;
-
-            }
-        }
-
-
-        private void Login(Uri uri, NetworkCredential nc, ConfigApiClient _configApiClient)
-        {
-
-            // Clear the dataGrids 
-            dataGridView1.Rows.Clear();
-            dataGridViewHotFixList.Rows.Clear();
-
-            VideoOS.Platform.SDK.Environment.Initialize();
+            ConfigApiClient _configApiClient = new ConfigApiClient();
 
             WriteInConsole("Connecting to: " + uri + ".", LogType.message);
-            VideoOS.Platform.SDK.Environment.AddServer(false, uri, nc, true);                    // Add the server to the environment 
+            bool isConnected = false;
             try
             {
-                VideoOS.Platform.SDK.Environment.Login(uri, IntegrationId, IntegrationName, Version, ManufacturerName);     // attempt to login 
+                isConnected = MilestoneApiHelper.Login(uri, nc, _configApiClient);
             }
             catch (ServerNotFoundMIPException snfe)
             {
@@ -316,172 +127,152 @@ namespace MilestoneUpdater
             {
                 WriteInConsole("Invalid credentials: " + ice.ToString() + ".", LogType.error);
             }
-
-            catch (System.BadImageFormatException)
-            {
-                // Ignore this error. 
-
-            }
-            catch (Exception e)
-            {
-                WriteInConsole("Other error connecting to: " + e.ToString() + ".", LogType.error);
-            }
-
-            string _serverAddress = uri.ToString();                           // server URI
-            int _serverPort = 80;                                             // Server port - TODO: Harcoded port 
-            bool _corporate = true;                                           // c-code - TODO: Harcoded type
-
-            _configApiClient.ServerAddress = _serverAddress;                  // set API Client
-            _configApiClient.Serverport = _serverPort;
-            _configApiClient.ServerType = _corporate
-                                              ? ConfigApiClient.ServerTypeEnum.Corporate
-                                              : ConfigApiClient.ServerTypeEnum.Arcus;
-
-            try
-            {
-                _configApiClient.Initialize();                                    // Initialize API
-            }
             catch (Exception ex)
             {
-                WriteInConsole("API Error: " + ex, LogType.error);
+                WriteInConsole("Other error connecting to " + ms_Info.Address + " : " + ex.ToString() + ".", LogType.error);
             }
 
-            if (_configApiClient.Connected)
+            if (isConnected)
             {
                 WriteInConsole("Connection to : " + uri + " established.", LogType.message);
+
+                ConfigurationItem managmentServer = _configApiClient.GetItem("/");
+                string ms_Name = Array.Find(managmentServer.Properties, ele => ele.Key == "Name").Value;
+                ms_Version = Array.Find(managmentServer.Properties, ele => ele.Key == "Version").Value;
+
+                labelMSName.Text = ms_Name;
+                labelMSVer.Text = ms_Version;
+
+                /// ADD RECORDING SERVERS TO THE DATAGRID
+
+                ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
+                MilestoneApiHelper.FillChildren(recordingServerFolder, _configApiClient);
+
+                List<ServerInfo> recordingServerList = new List<ServerInfo>();
+
+                foreach (ConfigurationItem recordingServer in recordingServerFolder.Children)
+                {
+                    recordingServerList.Add(new ServerInfo()
+                    {
+                        DisplayName = recordingServer.DisplayName,
+                        Address = Array.Find(recordingServer.Properties, ele => ele.Key == "HostName").Value,
+                        ServerType = HotFixType.RecordingServer.ToString(),
+                        Domain = ms_Info.Domain,
+                        UserName = ms_Info.UserName,
+                        Password = ms_Info.Password,
+
+                    });
+                }
+
+                PopulateServersDataGrid(recordingServerList);
+
+                /// TODO DO ADD ES AND MOS
+                /// 
+                /// /MIPKindFolder
+                /// MIPKind[9947f340-397c-483b-9e03-f27253f7f403]
+                /// 
+                ConfigurationItem mipKindFolder = _configApiClient.GetItem("/MIPKindFolder");
+                MilestoneApiHelper.FillChildren(mipKindFolder, _configApiClient);
+                ConfigurationItem mobileServers = Array.Find(mipKindFolder.Children, ele => ele.DisplayName == "Mobile Servers");
+                MilestoneApiHelper.FillChildren(mobileServers, _configApiClient);
+                ConfigurationItem itemFolder = Array.Find(mobileServers.Children, ele => ele.ItemType == "MIPItemFolder");
+                MilestoneApiHelper.FillChildren(itemFolder, _configApiClient);
+
+
+                List<ServerInfo> mobileServerList = new List<ServerInfo>();
+
+                foreach (ConfigurationItem movilServer in itemFolder.Children)
+                {
+                    mobileServerList.Add(new ServerInfo()
+                    {
+                        DisplayName = Array.Find(movilServer.Properties, ele => ele.Key == "Name").Value,
+                        Address = Array.Find(movilServer.Properties, ele => ele.Key == "ServerIdName").Value,
+                        ServerType = HotFixType.MovileServer.ToString(),
+                        Domain = ms_Info.Domain,
+                        UserName = ms_Info.UserName,
+                        Password = ms_Info.Password,
+                    });
+
+                }
+
+
+                PopulateServersDataGrid(mobileServerList);
+
+
+                MilestoneApiHelper.Logout(_configApiClient);
+                groupBoxHotfixes.Enabled = true;
             }
             else
             {
-                WriteInConsole("Connection to : " + uri + " failed.", LogType.error);
+                {
+                    WriteInConsole("Connection to : " + uri + " failed.", LogType.error);
+                }
             }
-
         }
 
-
-
-        /// Fill all the childs from a parent item 
-        /// </summary>
-        /// <param name="item">Parent ConfigurationItem</param>
-        /// <param name="_configApiClient">Milesotone API</param>
-        private void FillAllChilds(ConfigurationItem item, ConfigApiClient _configApiClient)
+        private void PopulateServersDataGrid(List<ServerInfo> serverList)
         {
-            FillChildren(item, _configApiClient);                                                                   // Call aux method to get the children using the API
-            foreach (var child in item.Children)                                                                    // For each child
+            foreach (ServerInfo server in serverList)
             {
-                FillAllChilds(child, _configApiClient);                                                             // Recurcive call
+                int n = serversDataGridView.Rows.Add();
+                serversDataGridView.Rows[n].Cells["DisplayName"].Value = server.DisplayName;
+                serversDataGridView.Rows[n].Cells["Address"].Value = server.Address;
+                serversDataGridView.Rows[n].Cells["ServerType"].Value = server.ServerType;
+                serversDataGridView.Rows[n].Cells["Domain"].Value = server.Domain;
+                serversDataGridView.Rows[n].Cells["User"].Value = server.UserName;
+                serversDataGridView.Rows[n].Cells["Password"].Value = server.Password;
+                serversDataGridView.Rows[n].Cells["Selected"].Value = true;
             }
         }
+
+        private void Change_All_Credencials_Button_Click(object sender, EventArgs e)
+        {
+            string _user = textBoxAllUser.Text;
+            string _pass = textBoxAllPass.Text;
+            string _domain = textBoxAllDomain.Text;
+
+            for (int i = 0; i < serversDataGridView.Rows.Count; i++)
+            {
+                serversDataGridView.Rows[i].Cells["Domain"].Value = _domain;
+                serversDataGridView.Rows[i].Cells["User"].Value = _user;
+                serversDataGridView.Rows[i].Cells["Password"].Value = _pass;
+            }
+        }
+
 
         /// <summary>
-        /// Auxiliar methot to fill childs from a parent item 
+        /// Start hotfix installation 
+        /// transverse servers dataGrid and get instalation parametes from each row. 
         /// </summary>
-        /// <param name="item">Parent ConfigurationItem</param>
-        /// <param name="_configApiClient">Milesotone API</param>
-        private void FillChildren(ConfigurationItem item, ConfigApiClient _configApiClient)
-        {
-            if (!item.ChildrenFilled)                                                                               //  If children was already filled continue 
-            {
-                item.Children = _configApiClient.GetChildItems(item.Path);                                          //  If not get the children with an API call
-                item.ChildrenFilled = true;                                                                         //  Filled flag 
-            }
-            if (item.Children == null)                                                                              //  If children is null
-                item.Children = new ConfigurationItem[0];                                                           //  Create a new object 
-        }
-
-
-
-        private String ResolveHostNametoIP(String host)
-        {
-            WriteInConsole("Resolving Name to IP: " + host, LogType.info);
-            IPHostEntry hostEntry;
-            hostEntry = Dns.GetHostEntry(host);
-
-            String result = hostEntry.AddressList.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault().ToString();
-
-            WriteInConsole("Resolved Name to IP: " + host + " to " + result, LogType.message);
-
-            return result;
-
-        }
-        private void WriteInConsole(string text, LogType type)
-        {
-
-            // if (type != LogType.debug)
-
-            {
-
-                textBox_Console.Invoke((MethodInvoker)delegate
-                {
-                    Color _color;
-                    switch (type)
-                    {
-                        case LogType.debug:
-                            _color = DEBUGCOLOR;
-                            break;
-                        case LogType.message:
-                            _color = MESSAGECOLOR;
-                            break;
-                        case LogType.info:
-                            _color = INFOCOLOR;
-                            break;
-                        case LogType.error:
-                            _color = ERRORCOLOR;
-                            break;
-                        default:
-                            _color = Color.White;
-                            break;
-                    }
-
-
-
-                    textBox_Console.SelectionStart = textBox_Console.TextLength;
-                    textBox_Console.SelectionLength = 0;
-
-                    textBox_Console.SelectionColor = _color;
-                    textBox_Console.AppendText(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": " + text + Environment.NewLine);
-                    textBox_Console.SelectionColor = textBox_Console.ForeColor;
-
-                    textBox_Console.SelectionStart = textBox_Console.TextLength;
-                    textBox_Console.ScrollToCaret();
-                });
-            }
-        }
-
-        enum LogType
-        {
-            debug,
-            message,
-            info,
-            error,
-        }
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
 
         private void InstallHotfixesClick(object sender, EventArgs e)
         {
             var listOfTasks = new List<Task>();
 
-
-            foreach (DataGridViewRow row in dataGridView1.Rows)
+            foreach (DataGridViewRow row in serversDataGridView.Rows)
             {
                 if ((bool)row.Cells["Selected"].Value == true)
                 {
                     ServerInfo remoteInfo = new ServerInfo()
                     {
-                        Address = ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
+                        Address = NetworkTools.ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
                         Domain = row.Cells["Domain"].Value.ToString(),
                         UserName = row.Cells["User"].Value.ToString(),
                         Password = row.Cells["Password"].Value.ToString(),
                         ServerType = row.Cells["ServerType"].Value.ToString(),
                     };
 
-                    Cursor.Current = Cursors.WaitCursor;                               // Restore cursor
+                    Cursor.Current = Cursors.WaitCursor;                               // WaitCursor
 
                     foreach (DataGridViewRow _row in dataGridViewHotFixList.Rows)
                     {
-                        if (_row.Cells["LocalLocation"].Value != null && _row.Cells["HotfixType"].Value.ToString() == remoteInfo.ServerType)
+                        if (_row.Cells["LocalLocation"].Value != null && _row.Cells["HotfixType"].Value.ToString() == remoteInfo.ServerType) // Chose the correct hotfix according to the server type
                         {
                             String file = _row.Cells["HotfixFile"].Value.ToString();
                             String filePath = _row.Cells["LocalLocation"].Value.ToString();
-                            listOfTasks.Add(new Task(() => CallProcess(remoteInfo, file)));
+                            listOfTasks.Add(new Task(() => HotfixInstallerWorker(remoteInfo, file), new CancellationToken()));
                         }
                     }
                 }
@@ -493,23 +284,65 @@ namespace MilestoneUpdater
             {
                 WriteInConsole("Task(s) completed", LogType.message);
             });
+
             Cursor.Current = Cursors.Default;                               // Restore cursor
 
         }
 
+        private void HotfixInstallerWorker(ServerInfo remoteInfo, string file)
+        {
+            WriteInConsole("Start updater on " + remoteInfo.Address, LogType.message);
+
+            if (NetworkTools.IsLocalServer(remoteInfo.Address))                                                  // If is not remote just install 
+            {
+                ManagementScope theScope = new ManagementScope(@"\\LOCALHOST\root\cimv2");
+                ExecuteFile(remoteInfo, theScope, LOCALFOLDER + "\\" + file, " /quiet /install");
+            }
+            else
+            {
+                ManagementScope theScope = NetworkTools.EstablishConnection(remoteInfo);
+                CreateRemoteFolder(remoteInfo, theScope);
+                ShareRemoteFolder(remoteInfo, theScope);
+                CopyFile(remoteInfo, file);
+                ExecuteFile(remoteInfo, theScope, REMOTEFOLDER + "\\" + file, " /quiet /install");              // RUN IT !!!! AND DO IT QUIET !!! 
+                UnshareRemoteFolder(remoteInfo, theScope);
+                DeleteRemoteFolder(remoteInfo, theScope);
+            }
+        }
+
+        /// <summary>
+        /// Get Hotfix list from online json 
+        /// prerequisite: server version 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e2"></param>
         private void FindHotfixes_Click(object sender, EventArgs e2)
         {
             dataGridViewHotFixList.Rows.Clear();
 
+
+            //            ms_Version = "21.1";   /// TEST VALUES REMOVE ON PRODUCTION
+
+            //            ms_Version = "20.3";   /// TEST VALUES REMOVE ON PRODUCTION
+            //            ms_Version = "20.2";   /// TEST VALUES REMOVE ON PRODUCTION
+            //            ms_Version = "20.1";   /// TEST VALUES REMOVE ON PRODUCTION
+
+            //            ms_Version = "13.3";   /// TEST VALUES REMOVE ON PRODUCTION  -- MOS and ES not pulling
+            //            ms_Version = "13.2";   /// TEST VALUES REMOVE ON PRODUCTION  -- MOS and ES not pulling
+            //            ms_Version = "13.1";   /// TEST VALUES REMOVE ON PRODUCTION -- MOS and ES not pulling
+
+            //            ms_Version = "12.3";   /// TEST VALUES REMOVE ON PRODUCTION  -- ONLY RS WORKS 
+            //            ms_Version = "12.2";   /// TEST VALUES REMOVE ON PRODUCTION  -- MOS and ES not pulling
+            //            ms_Version = "12.1";   /// TEST VALUES REMOVE ON PRODUCTION  -- MOS and ES not pulling
+
+
+
             if (ms_Version == null)
             {
-                WriteInConsole("Connect to a server first", LogType.error);
+                WriteInConsole("Connect the server version", LogType.error);
                 return;
             }
 
-
-            // using (StreamReader r = new StreamReader("hotfixList.json"))
-            // string json = r.ReadToEnd();
             using (WebClient wc = new WebClient())
             {
                 try
@@ -520,14 +353,43 @@ namespace MilestoneUpdater
 
                     Hotfix hotfix = items.Find(elem => ms_Version.Contains(elem.Version));
 
-                    int n = dataGridViewHotFixList.Rows.Add();
-                    dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = HotFixType.RecordingServer;
-                    dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = hotfix.RS;
-                    var files = GetFilesFrom_HTML_DOM(hotfix.RS);
-                    String hotfixFile = files[0];
-                    String hotfixFileReleaseNote = files[1];
-                    dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = hotfixFile;
+                    string url = hotfix.RS;
+                    HotfixFile hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
+                    if (hotfixFile != null)
+                    {
+                        hotfixFile.Url = url;
+                        AddHotfixFileToDataGrid(hotfixFile);
+                    }
 
+                    /// TODO:  ADD DATABASE HOTFIXES TOO
+                    /// Extend GetFilesFrom_HTML_DOM
+
+                    url = hotfix.MS;
+                    foreach (var f in GetFilesFrom_HTML_DOM(url))
+                    {
+                        hotfixFile = IdentifyHotfix(Path.GetFileName(f));
+                        if (hotfixFile != null)
+                        {
+                            hotfixFile.Url = url;
+                            AddHotfixFileToDataGrid(hotfixFile);
+                        }
+                    }
+
+                    url = hotfix.ES;
+                    hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
+                    if (hotfixFile != null)
+                    {
+                        hotfixFile.Url = url;
+                        AddHotfixFileToDataGrid(hotfixFile);
+                    }
+
+                    url = hotfix.MOS;
+                    hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
+                    if (hotfixFile != null)
+                    {
+                        hotfixFile.Url = url;
+                        AddHotfixFileToDataGrid(hotfixFile);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -536,8 +398,15 @@ namespace MilestoneUpdater
             }
         }
 
+        /// <summary>
+        /// Manualy choose a hotfix from the local storage
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void SelectHotFoxLocalStorage_Click(object sender, EventArgs e)
         {
+
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.InitialDirectory = "c:\\";
@@ -547,20 +416,18 @@ namespace MilestoneUpdater
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-
-
                     string fileName = openFileDialog.FileName;
-                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
 
+                    HotfixFile hotfixFile = IdentifyHotfix(Path.GetFileName(fileName));
+
+
+                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);           // Copy file to LOCALFOLDER
                     if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
 
-                    int n = dataGridViewHotFixList.Rows.Add();
-                    dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = HotFixType.RecordingServer;
-                    dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = Path.GetFullPath(fileName);
+                    hotfixFile.Url = Path.GetFullPath(fileName);
+                    hotfixFile.LocalLocation = fileNameInstallationDir;
 
-                    dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = Path.GetFileName(fileName);
-                    dataGridViewHotFixList.Rows[n].Cells["LocalLocation"].Value = fileNameInstallationDir;
-
+                    AddHotfixFileToDataGrid(hotfixFile);
 
 
                 }
@@ -569,10 +436,94 @@ namespace MilestoneUpdater
 
 
 
+        private void AddHotfixFileToDataGrid(HotfixFile hotfixFile)
+        {
+
+            int n = dataGridViewHotFixList.Rows.Add();
+            dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = hotfixFile.Type;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixVersion"].Value = hotfixFile.Version;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixServerVersion"].Value = hotfixFile.ServerVersion;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = hotfixFile.Url;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = hotfixFile.File;
+            dataGridViewHotFixList.Rows[n].Cells["LocalLocation"].Value = hotfixFile.LocalLocation;
+        }
+
+        private HotfixFile IdentifyHotfix(string fileName)
+        {
+
+
+            if (fileName == null) return null;
+
+
+            //DBHotfix399827.exe
+            if (fileName.Contains("DBHotfix"))
+            {
+                return new HotfixFile()
+                {
+                    Version = "X",
+                    Type = HotFixType.ManagementServer,
+                    ServerVersion = "X",
+                    File = fileName
+                };
+            }
+            else
+
+            //MilestoneXProtectMobileServerInstaller_x64.exe
+            if (fileName.Contains("MobileServer"))
+            {
+                return new HotfixFile()
+                {
+                    Version = "X",
+                    Type = HotFixType.MovileServer,
+                    ServerVersion = "X",
+                    File = fileName
+                };
+            }
+            else
+            {
+
+
+                //       0       1          2      3   45
+                //	Milestone.Hotfix.202107192213.RS.21.12.12177.80.exe
+                //  Milestone.Hotfix.202105100826.RS.20.31.93.182.exe
+                string[] slides = fileName.Split('.');
+
+                HotFixType hotfixtype;
+                switch (slides[3])
+                {
+                    case "RS":
+                        hotfixtype = HotFixType.RecordingServer;
+                        break;
+
+                    case "MS":
+                        hotfixtype = HotFixType.ManagementServer;
+                        break;
+
+                    case "ES":
+                        hotfixtype = HotFixType.EventServer;
+                        break;
+
+                    default:
+                        hotfixtype = HotFixType.Unknown;
+                        break;
+                }
+
+
+                return new HotfixFile()
+                {
+                    Version = slides[2],
+                    Type = hotfixtype,
+                    ServerVersion = slides[4] + "." + slides[5],
+                    File = fileName
+                };
+
+
+            }
+        }
 
         private String[] GetFilesFrom_HTML_DOM(string folder)
         {
-            String[] result = new String[2];
+            String[] result = new String[10];
 
             using (WebClient client = new WebClient())
             {
@@ -588,18 +539,17 @@ namespace MilestoneUpdater
 
                 if (webBrowser1.Document != null)
                 {
+                    int i = 0;
                     HtmlElementCollection elems = webBrowser1.Document.GetElementsByTagName("a");
                     foreach (HtmlElement elem in elems)
                     {
                         String hrefStr = elem.GetAttribute("href");
-                        if (hrefStr.Contains("Hotfix"))
+                        if (hrefStr.Contains("Hotfix") || hrefStr.Contains("Installer") || hrefStr.Contains("DBHotfix"))
                         {
-                            if (hrefStr.Contains("ReleaseNotes"))
+                            if (!hrefStr.Contains("Release") && !hrefStr.Contains("ReadMe"))
                             {
-                                result[1] = GetFileName(hrefStr);
+                                result[i++] = GetFileName(hrefStr);
                             }
-                            else
-                                result[0] = GetFileName(hrefStr); ;
                         }
                     }
                 }
@@ -610,14 +560,6 @@ namespace MilestoneUpdater
         private string GetFileName(string hrefStr)
         {
             return hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
-        }
-
-        enum HotFixType
-        {
-            RecordingServer,
-            ManagementServer,
-            EventServer,
-            MovileServer
         }
 
 
@@ -755,13 +697,13 @@ namespace MilestoneUpdater
         {
             var listOfTasks = new List<Task>();
 
-            foreach (DataGridViewRow row in dataGridView1.Rows)
+            foreach (DataGridViewRow row in serversDataGridView.Rows)
             {
                 if ((bool)row.Cells["Selected"].Value == true)
                 {
                     ServerInfo remoteInfo = new ServerInfo()
                     {
-                        Address = ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
+                        Address = NetworkTools.ResolveHostNametoIP(row.Cells["Address"].Value.ToString()),
                         Domain = row.Cells["Domain"].Value.ToString(),
                         UserName = row.Cells["User"].Value.ToString(),
                         Password = row.Cells["Password"].Value.ToString(),
@@ -788,19 +730,19 @@ namespace MilestoneUpdater
         private void CallInstallDevicePackProcess(ServerInfo remoteInfo, string file)
         {
 
-            if (IsLocalServer(remoteInfo.Address))
+            if (NetworkTools.IsLocalServer(remoteInfo.Address))
             {
                 ManagementScope scope = new ManagementScope(@"\\LOCALHOST\root\cimv2");
-                ExecuteRemoteFile(remoteInfo, scope, LOCALFOLDER + "\\" + file, " --quiet");
+                ExecuteFile(remoteInfo, scope, LOCALFOLDER + "\\" + file, " --quiet");
             }
             else
             {
-                ManagementScope scope = EstablishConnection(remoteInfo);
+                ManagementScope scope = NetworkTools.EstablishConnection(remoteInfo);
 
                 CreateRemoteFolder(remoteInfo, scope);
                 ShareRemoteFolder(remoteInfo, scope);
                 CopyFile(remoteInfo, file);
-                ExecuteRemoteFile(remoteInfo, scope, REMOTEFOLDER + "\\" + file, " --quiet");
+                ExecuteFile(remoteInfo, scope, REMOTEFOLDER + "\\" + file, " --quiet");
                 UnshareRemoteFolder(remoteInfo, scope);
                 DeleteRemoteFolder(remoteInfo, scope);
             }
@@ -827,7 +769,7 @@ namespace MilestoneUpdater
                 var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
                 object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };
                 var mdResult = Win32_Process_Class.InvokeMethod("Create", cmdMdTemp);
-                WriteInConsole("Create Share Folder " + ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
+                WriteInConsole("Create Share Folder " + CodeToStringConverters.ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
 
             }
             catch (Exception e)
@@ -849,9 +791,9 @@ namespace MilestoneUpdater
             {
                 WriteInConsole("Sharing Folder " + remoteInfo.Address, LogType.info);
                 var winShareClass = new ManagementClass(theScope, new ManagementPath("Win32_Share"), new ObjectGetOptions());
-                ManagementBaseObject shareParams = SetShareParams(winShareClass, REMOTEFOLDER, REMOTESHARENAME);
+                ManagementBaseObject shareParams = NetworkTools.SetShareParams(winShareClass, REMOTEFOLDER, REMOTESHARENAME);
                 var outParams = winShareClass.InvokeMethod("Create", shareParams, null);
-                WriteInConsole("Share Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(outParams.Properties["ReturnValue"].Value)), LogType.info);
+                WriteInConsole("Share Folder " + CodeToStringConverters.ShareFolderErrorCodeToString(Convert.ToInt32(outParams.Properties["ReturnValue"].Value)), LogType.info);
 
             }
             catch (Exception e)
@@ -887,7 +829,7 @@ namespace MilestoneUpdater
         }
 
 
-        private void ExecuteRemoteFile(ServerInfo remoteInfo, ManagementScope theScope, string file, string args)
+        private void ExecuteFile(ServerInfo remoteInfo, ManagementScope theScope, string file, string args)
         {
             WriteInConsole("Executing Hotfix on server " + remoteInfo.Address, LogType.info);
 
@@ -902,7 +844,7 @@ namespace MilestoneUpdater
 
                 String ProcID = theProcessToRun[3].ToString();
 
-                WriteInConsole("Execute Hotfix on server " + remoteInfo.Address + ": " + ErrorCodeToString(Convert.ToInt32(output)), LogType.info);
+                WriteInConsole("Execute Hotfix on server " + remoteInfo.Address + ": " + CodeToStringConverters.ErrorCodeToString(Convert.ToInt32(output)), LogType.info);
 
                 WriteInConsole("PID on server  " + remoteInfo.Address + ": " + ProcID, LogType.debug);
 
@@ -951,7 +893,7 @@ namespace MilestoneUpdater
                     if (Convert.ToString(item["Name"]).Equals(REMOTESHARENAME))
                     {
                         var unshareOutParams = item.InvokeMethod("Delete", new object[] { });
-                        WriteInConsole("Unshare Folder " + ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
+                        WriteInConsole("Unshare Folder " + CodeToStringConverters.ShareFolderErrorCodeToString(Convert.ToInt32(unshareOutParams)), LogType.info);
                     }
                 }
 
@@ -971,7 +913,7 @@ namespace MilestoneUpdater
                 var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
                 object[] cmdRMTemp = { @"cmd.exe /c rmdir /s /q " + REMOTEFOLDER };
                 var rmResult = Win32_Process_Class.InvokeMethod("Create", cmdRMTemp);
-                WriteInConsole("Remove Share Folder " + ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
+                WriteInConsole("Remove Share Folder " + CodeToStringConverters.ErrorCodeToString(Convert.ToInt32(rmResult)), LogType.info);
 
             }
             catch (Exception ex)
@@ -987,7 +929,7 @@ namespace MilestoneUpdater
             progressBar1.Value = 0;
         }
 
-   
+
         private void button8_Click(object sender, EventArgs e)
         {
 
@@ -1006,18 +948,18 @@ namespace MilestoneUpdater
                     string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
 
                     if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
-                  
-                    
+
+
                     var source = new Dictionary<string, string>();
 
                     source.Add(Path.GetFileName(fileName), fileNameInstallationDir);
-                    
+
 
                     comboBox1.DataSource = new BindingSource(source, null);
                     comboBox1.DisplayMember = "Key";
                     comboBox1.ValueMember = "Value";
-                    
-                    
+
+
                     progressBar1.Value = 100;
                     downloadedDP = Path.GetFileName(fileName);
 
@@ -1027,7 +969,55 @@ namespace MilestoneUpdater
 
         }
 
-        private void progressBar1_Click(object sender, EventArgs e)
+
+        bool debug = true;
+        private void WriteInConsole(string text, LogType type)
+        {
+            if (!debug || type != LogType.debug)
+            {
+                textBox_Console.Invoke((MethodInvoker)delegate
+                {
+                    Color _color;
+                    switch (type)
+                    {
+                        case LogType.debug:
+                            _color = DEBUGCOLOR;
+                            break;
+                        case LogType.message:
+                            _color = MESSAGECOLOR;
+                            break;
+                        case LogType.info:
+                            _color = INFOCOLOR;
+                            break;
+                        case LogType.error:
+                            _color = ERRORCOLOR;
+                            break;
+                        default:
+                            _color = Color.White;
+                            break;
+                    }
+                    textBox_Console.SelectionStart = textBox_Console.TextLength;
+                    textBox_Console.SelectionLength = 0;
+
+                    textBox_Console.SelectionColor = _color;
+                    textBox_Console.AppendText(DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss") + ": " + text + Environment.NewLine);
+                    textBox_Console.SelectionColor = textBox_Console.ForeColor;
+
+                    textBox_Console.SelectionStart = textBox_Console.TextLength;
+                    textBox_Console.ScrollToCaret();
+                });
+            }
+        }
+
+        enum LogType
+        {
+            debug,
+            message,
+            info,
+            error,
+        }
+
+        private void groupBox4_Enter(object sender, EventArgs e)
         {
 
         }

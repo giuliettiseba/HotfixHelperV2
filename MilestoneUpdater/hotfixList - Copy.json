@@ -1,0 +1,78 @@
+﻿[
+  {
+    "Version": "21.1",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000036500/Management%20Server/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000036500/Recording%20Server/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000036500/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000036500/Evente%20Server/"
+  },
+
+  {
+    "Version": "20.3",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000028000/Management%20Server/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000028000/Recording%20Server/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000028000/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000028000/Evente%20Server/"
+  },
+  {
+    "Version": "20.2",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000022900/MS/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000022900/RS/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000022900/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000022900/ES/"
+  },
+  {
+    "Version": "20.1",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000020540/Management%20Server/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000020540/Recording%20Server/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000020540/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000020540/Evente%20Server/"
+  },
+  {
+    "Version": "13.3",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000018970/Management%20Server/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000018970/Recording%20Server/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000018970/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000018970/Evente%20Server/"
+  },
+  {
+    "Version": "13.2",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000016580/Management%20Server/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000016580/Recording%20Server/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000016580/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000016580/Evente%20Server/"
+  },
+  {
+    "Version": "13.1",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000011717/Management%20Server/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000011717/Recording%20Server/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000011717/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000011717/Evente%20Server/"
+  },
+  {
+    "Version": "12.3",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000007805/MS/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000007805/RS/",
+    "MOS": "https://download.milestonesys.com/MTSKB/KB000007805/Mobile%20Server/",
+    "ES": "https://download.milestonesys.com/MTSKB/KB000007805/ES/"
+  },
+  {
+    "Version": "12.2",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000006211/ManagementServer2018R2/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000006211/RecordingServer2018R2/",
+    "MOS": "",
+    "ES": ""
+  },
+
+  {
+    "Version": "12.1",
+    "MS": "https://download.milestonesys.com/MTSKB/KB000004220/ManagementServer2018R1/",
+    "RS": "https://download.milestonesys.com/MTSKB/KB000004220/RecordingServer2018R1/",
+    "MOS": "",
+    "ES": ""
+
+
+  }
+
+
+]

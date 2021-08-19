@@ -280,10 +280,15 @@
       <DependentUpon>HotfixHelperV2.cs</DependentUpon>
     </Compile>
     <Compile Include="Utils\DevicePack.cs" />
+    <Compile Include="Utils\CodeToStringConverters.cs" />
+    <Compile Include="Utils\HotfixFile.cs" />
     <Compile Include="Utils\Hotfix.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utils\HotFixType.cs" />
+    <Compile Include="Utils\MilestoneApiHelper.cs" />
     <Compile Include="Utils\networkshare.cs" />
+    <Compile Include="Utils\NetworkTools.cs" />
     <Compile Include="Utils\ServerInfo.cs" />
     <EmbeddedResource Include="HotfixHelperV2.resx">
       <DependentUpon>HotfixHelperV2.cs</DependentUpon>
@@ -300,6 +305,7 @@
     </Compile>
     <None Include="app.manifest" />
     <None Include="devicePackList.json" />
+    <None Include="hotfixList - Copy.json" />
     <None Include="hotfixList.json" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

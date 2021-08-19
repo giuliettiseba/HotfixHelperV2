@@ -16,6 +16,9 @@ namespace MilestoneHotfixHelper.Utils
 
         public String ServerType { get; set; }
 
+        public String DisplayName { get; set; }
+
+
     }
 
 

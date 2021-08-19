@@ -47,7 +47,7 @@ namespace MilestoneUpdater
             this.buttonMSConnect = new System.Windows.Forms.Button();
             this.textBox_Console = new System.Windows.Forms.RichTextBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
+            this.serversDataGridView = new System.Windows.Forms.DataGridView();
             this.DisplayName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ServerType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Address = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -65,10 +65,6 @@ namespace MilestoneUpdater
             this.textBoxAllUser = new System.Windows.Forms.TextBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.dataGridViewHotFixList = new System.Windows.Forms.DataGridView();
-            this.HotfixType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HotfixUrl = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HotfixFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LocalLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBoxHotfixes = new System.Windows.Forms.GroupBox();
             this.button6 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -83,9 +79,15 @@ namespace MilestoneUpdater
             this.groupBox6 = new System.Windows.Forms.GroupBox();
             this.button8 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
+            this.HotfixType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixServerVersion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixVersion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixUrl = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LocalLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.serversDataGridView)).BeginInit();
             this.groupBox3.SuspendLayout();
             this.groupBox4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewHotFixList)).BeginInit();
@@ -137,7 +139,7 @@ namespace MilestoneUpdater
             // 
             this.labelMSVer.AutoSize = true;
             this.labelMSVer.ForeColor = System.Drawing.SystemColors.Control;
-            this.labelMSVer.Location = new System.Drawing.Point(222, 133);
+            this.labelMSVer.Location = new System.Drawing.Point(226, 133);
             this.labelMSVer.Name = "labelMSVer";
             this.labelMSVer.Size = new System.Drawing.Size(76, 13);
             this.labelMSVer.TabIndex = 13;
@@ -210,40 +212,40 @@ namespace MilestoneUpdater
             this.buttonMSConnect.TabIndex = 3;
             this.buttonMSConnect.Text = "Get Recording Servers";
             this.buttonMSConnect.UseVisualStyleBackColor = true;
-            this.buttonMSConnect.Click += new System.EventHandler(this.ButtonMSConnect_Click);
+            this.buttonMSConnect.Click += new System.EventHandler(this.GetRecordingServers_Button_Click);
             // 
             // textBox_Console
             // 
             this.textBox_Console.BackColor = System.Drawing.SystemColors.InfoText;
-            this.textBox_Console.Location = new System.Drawing.Point(8, 612);
+            this.textBox_Console.Location = new System.Drawing.Point(8, 772);
             this.textBox_Console.Name = "textBox_Console";
-            this.textBox_Console.Size = new System.Drawing.Size(1041, 249);
+            this.textBox_Console.Size = new System.Drawing.Size(1041, 89);
             this.textBox_Console.TabIndex = 11;
             this.textBox_Console.TabStop = false;
             this.textBox_Console.Text = "";
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.dataGridView1);
+            this.groupBox2.Controls.Add(this.serversDataGridView);
             this.groupBox2.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.groupBox2.ForeColor = System.Drawing.Color.Snow;
             this.groupBox2.Location = new System.Drawing.Point(8, 181);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(1041, 214);
+            this.groupBox2.Size = new System.Drawing.Size(1041, 278);
             this.groupBox2.TabIndex = 12;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Servers List";
             // 
-            // dataGridView1
+            // serversDataGridView
             // 
-            this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.AllowUserToDeleteRows = false;
-            this.dataGridView1.AllowUserToOrderColumns = true;
-            this.dataGridView1.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
-            this.dataGridView1.BackgroundColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.dataGridView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.serversDataGridView.AllowUserToAddRows = false;
+            this.serversDataGridView.AllowUserToDeleteRows = false;
+            this.serversDataGridView.AllowUserToOrderColumns = true;
+            this.serversDataGridView.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.serversDataGridView.BackgroundColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.serversDataGridView.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.serversDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.serversDataGridView.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.DisplayName,
             this.ServerType,
             this.Address,
@@ -251,16 +253,16 @@ namespace MilestoneUpdater
             this.User,
             this.Password,
             this.Selected});
-            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridView1.Location = new System.Drawing.Point(3, 16);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowHeadersVisible = false;
+            this.serversDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.serversDataGridView.Location = new System.Drawing.Point(3, 16);
+            this.serversDataGridView.Name = "serversDataGridView";
+            this.serversDataGridView.RowHeadersVisible = false;
             dataGridViewCellStyle2.BackColor = System.Drawing.Color.DarkGray;
             dataGridViewCellStyle2.ForeColor = System.Drawing.Color.White;
-            this.dataGridView1.RowsDefaultCellStyle = dataGridViewCellStyle2;
-            this.dataGridView1.Size = new System.Drawing.Size(1035, 195);
-            this.dataGridView1.TabIndex = 0;
-            this.dataGridView1.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dataGridView1_CellFormatting);
+            this.serversDataGridView.RowsDefaultCellStyle = dataGridViewCellStyle2;
+            this.serversDataGridView.Size = new System.Drawing.Size(1035, 259);
+            this.serversDataGridView.TabIndex = 0;
+            this.serversDataGridView.CellFormatting += new System.Windows.Forms.DataGridViewCellFormattingEventHandler(this.dataGridView1_CellFormatting);
             // 
             // DisplayName
             // 
@@ -327,7 +329,7 @@ namespace MilestoneUpdater
             this.buttonAllCredentials.TabIndex = 11;
             this.buttonAllCredentials.Text = "Change Credentials";
             this.buttonAllCredentials.UseVisualStyleBackColor = true;
-            this.buttonAllCredentials.Click += new System.EventHandler(this.buttonAllCredentials_Click);
+            this.buttonAllCredentials.Click += new System.EventHandler(this.Change_All_Credencials_Button_Click);
             // 
             // label10
             // 
@@ -383,12 +385,13 @@ namespace MilestoneUpdater
             this.groupBox4.Controls.Add(this.dataGridViewHotFixList);
             this.groupBox4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.groupBox4.ForeColor = System.Drawing.Color.Snow;
-            this.groupBox4.Location = new System.Drawing.Point(8, 401);
+            this.groupBox4.Location = new System.Drawing.Point(8, 465);
             this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(1041, 84);
+            this.groupBox4.Size = new System.Drawing.Size(1041, 180);
             this.groupBox4.TabIndex = 14;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Hotfix List";
+            this.groupBox4.Enter += new System.EventHandler(this.groupBox4_Enter);
             // 
             // dataGridViewHotFixList
             // 
@@ -401,6 +404,8 @@ namespace MilestoneUpdater
             this.dataGridViewHotFixList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewHotFixList.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.HotfixType,
+            this.HotfixServerVersion,
+            this.HotfixVersion,
             this.HotfixUrl,
             this.HotfixFile,
             this.LocalLocation});
@@ -411,35 +416,8 @@ namespace MilestoneUpdater
             dataGridViewCellStyle3.BackColor = System.Drawing.Color.DimGray;
             dataGridViewCellStyle3.ForeColor = System.Drawing.Color.White;
             this.dataGridViewHotFixList.RowsDefaultCellStyle = dataGridViewCellStyle3;
-            this.dataGridViewHotFixList.Size = new System.Drawing.Size(1035, 65);
+            this.dataGridViewHotFixList.Size = new System.Drawing.Size(1035, 161);
             this.dataGridViewHotFixList.TabIndex = 0;
-            // 
-            // HotfixType
-            // 
-            this.HotfixType.FillWeight = 10F;
-            this.HotfixType.HeaderText = "HotfixType";
-            this.HotfixType.Name = "HotfixType";
-            this.HotfixType.ReadOnly = true;
-            // 
-            // HotfixUrl
-            // 
-            this.HotfixUrl.FillWeight = 31.81049F;
-            this.HotfixUrl.HeaderText = "HotfixUrl";
-            this.HotfixUrl.Name = "HotfixUrl";
-            this.HotfixUrl.ReadOnly = true;
-            // 
-            // HotfixFile
-            // 
-            this.HotfixFile.FillWeight = 31.81049F;
-            this.HotfixFile.HeaderText = "HotfixFile";
-            this.HotfixFile.Name = "HotfixFile";
-            this.HotfixFile.ReadOnly = true;
-            // 
-            // LocalLocation
-            // 
-            this.LocalLocation.FillWeight = 31.81049F;
-            this.LocalLocation.HeaderText = "LocalLocation";
-            this.LocalLocation.Name = "LocalLocation";
             // 
             // groupBoxHotfixes
             // 
@@ -449,7 +427,6 @@ namespace MilestoneUpdater
             this.groupBoxHotfixes.Controls.Add(this.button3);
             this.groupBoxHotfixes.Controls.Add(this.button1);
             this.groupBoxHotfixes.Controls.Add(this.button2);
-            this.groupBoxHotfixes.Enabled = false;
             this.groupBoxHotfixes.ForeColor = System.Drawing.Color.Snow;
             this.groupBoxHotfixes.Location = new System.Drawing.Point(364, 12);
             this.groupBoxHotfixes.Name = "groupBoxHotfixes";
@@ -557,7 +534,6 @@ namespace MilestoneUpdater
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.Size = new System.Drawing.Size(541, 10);
             this.progressBar1.TabIndex = 29;
-            this.progressBar1.Click += new System.EventHandler(this.progressBar1_Click);
             // 
             // comboBox1
             // 
@@ -577,7 +553,7 @@ namespace MilestoneUpdater
             this.groupBox6.Controls.Add(this.progressBar1);
             this.groupBox6.Controls.Add(this.button5);
             this.groupBox6.ForeColor = System.Drawing.Color.Snow;
-            this.groupBox6.Location = new System.Drawing.Point(8, 491);
+            this.groupBox6.Location = new System.Drawing.Point(8, 651);
             this.groupBox6.Name = "groupBox6";
             this.groupBox6.Size = new System.Drawing.Size(1041, 115);
             this.groupBox6.TabIndex = 31;
@@ -608,6 +584,48 @@ namespace MilestoneUpdater
             this.button7.UseVisualStyleBackColor = true;
             this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
+            // HotfixType
+            // 
+            this.HotfixType.FillWeight = 13F;
+            this.HotfixType.HeaderText = "HotfixType";
+            this.HotfixType.Name = "HotfixType";
+            this.HotfixType.ReadOnly = true;
+            // 
+            // HotfixServerVersion
+            // 
+            this.HotfixServerVersion.FillWeight = 10F;
+            this.HotfixServerVersion.HeaderText = "HotfixServerVersion";
+            this.HotfixServerVersion.Name = "HotfixServerVersion";
+            this.HotfixServerVersion.ReadOnly = true;
+            // 
+            // HotfixVersion
+            // 
+            this.HotfixVersion.FillWeight = 10F;
+            this.HotfixVersion.HeaderText = "HotfixVersion";
+            this.HotfixVersion.Name = "HotfixVersion";
+            this.HotfixVersion.ReadOnly = true;
+            // 
+            // HotfixUrl
+            // 
+            this.HotfixUrl.FillWeight = 31.81049F;
+            this.HotfixUrl.HeaderText = "HotfixUrl";
+            this.HotfixUrl.Name = "HotfixUrl";
+            this.HotfixUrl.ReadOnly = true;
+            // 
+            // HotfixFile
+            // 
+            this.HotfixFile.FillWeight = 31.81049F;
+            this.HotfixFile.HeaderText = "HotfixFile";
+            this.HotfixFile.Name = "HotfixFile";
+            this.HotfixFile.ReadOnly = true;
+            // 
+            // LocalLocation
+            // 
+            this.LocalLocation.FillWeight = 31.81049F;
+            this.LocalLocation.HeaderText = "LocalLocation";
+            this.LocalLocation.Name = "LocalLocation";
+            this.LocalLocation.ReadOnly = true;
+            // 
             // HotfixHelperV2
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -627,7 +645,7 @@ namespace MilestoneUpdater
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.serversDataGridView)).EndInit();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             this.groupBox4.ResumeLayout(false);
@@ -654,7 +672,7 @@ namespace MilestoneUpdater
         private System.Windows.Forms.RichTextBox textBox_Console;
         private System.Windows.Forms.Label labelMSName;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.DataGridView dataGridView1;
+        private System.Windows.Forms.DataGridView serversDataGridView;
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.Button buttonAllCredentials;
         private System.Windows.Forms.Label label10;
@@ -673,10 +691,6 @@ namespace MilestoneUpdater
         private System.Windows.Forms.DataGridViewTextBoxColumn User;
         private System.Windows.Forms.DataGridViewTextBoxColumn Password;
         private System.Windows.Forms.DataGridViewCheckBoxColumn Selected;
-        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixType;
-        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixUrl;
-        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixFile;
-        private System.Windows.Forms.DataGridViewTextBoxColumn LocalLocation;
         private System.Windows.Forms.GroupBox groupBoxHotfixes;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.NumericUpDown numericUpDown_MaxDegreeOfParallelism;
@@ -692,6 +706,12 @@ namespace MilestoneUpdater
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button button8;
         private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixType;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixServerVersion;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixVersion;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixUrl;
+        private System.Windows.Forms.DataGridViewTextBoxColumn HotfixFile;
+        private System.Windows.Forms.DataGridViewTextBoxColumn LocalLocation;
     }
 }
 
