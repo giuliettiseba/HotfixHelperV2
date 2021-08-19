@@ -76,9 +76,9 @@ namespace MilestoneUpdater
             textBoxMSUser.Text = "SGIU";
             textBoxMSPass.Text = "Milestone1$";
 
-            textBoxAllDomain.Text = "MILESTONE";
-            textBoxAllUser.Text = "SGIU";
-            textBoxAllPass.Text = "Rfvdfg159753..";
+            textBoxAllDomain.Text = "";
+            textBoxAllUser.Text = "";
+            textBoxAllPass.Text = "";
         }
         private void TestParameters()
         {
