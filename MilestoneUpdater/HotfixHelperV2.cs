@@ -179,13 +179,13 @@ namespace MilestoneUpdater
                 List<ServerInfo> mobileServerList = new List<ServerInfo>();
 
                 // Get info and add the MoSs to the list 
-                foreach (ConfigurationItem movilServer in itemFolder.Children)
+                foreach (ConfigurationItem mobileServer in itemFolder.Children)
                 {
                     mobileServerList.Add(new ServerInfo()
                     {
-                        DisplayName = Array.Find(movilServer.Properties, ele => ele.Key == "Name").Value,
-                        Address = Array.Find(movilServer.Properties, ele => ele.Key == "ServerIdName").Value,
-                        ServerType = HotFixType.MovileServer.ToString(),
+                        DisplayName = Array.Find(mobileServer.Properties, ele => ele.Key == "Name").Value,
+                        Address = Array.Find(mobileServer.Properties, ele => ele.Key == "ServerIdName").Value,
+                        ServerType = HotFixType.MobileServer.ToString(),
                         Domain = ms_Info.Domain,
                         UserName = ms_Info.UserName,
                         Password = ms_Info.Password,
@@ -552,7 +552,7 @@ namespace MilestoneUpdater
                 return new HotfixFile()
                 {
                     Version = "X",
-                    Type = HotFixType.MovileServer,
+                    Type = HotFixType.MobileServer,
                     ServerVersion = "X",
                     File = fileName
                 };

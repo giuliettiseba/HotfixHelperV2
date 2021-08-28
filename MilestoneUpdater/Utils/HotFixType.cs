@@ -5,7 +5,7 @@
         RecordingServer,
         ManagementServer,
         EventServer,
-        MovileServer,
+        MobileServer,
         Unknown
     }
 }
