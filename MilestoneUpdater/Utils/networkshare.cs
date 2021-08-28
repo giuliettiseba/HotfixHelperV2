@@ -9,11 +9,6 @@ namespace MilestoneHotfixHelper.Utils
 {
     public static class NetworkShare
     {
-
-
-
-
-
         /// <summary>
         /// Connects to the remote share
         /// </summary>

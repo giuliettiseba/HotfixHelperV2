@@ -17,8 +17,6 @@ namespace HotfixHelperV2.Utils
             return remoteHostEntry.AddressList.Contains(localHostEntry.AddressList.FirstOrDefault());
         }
 
-
-
         internal static ManagementScope EstablishConnection(ServerInfo remoteInfo)
         {
             ConnectionOptions theConnection = new ConnectionOptions();

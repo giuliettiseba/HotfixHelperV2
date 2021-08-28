@@ -30,9 +30,6 @@ namespace MilestoneUpdater
         readonly Color DEBUGCOLOR = System.Drawing.ColorTranslator.FromHtml("#DCDCAA");
         readonly Color ERRORCOLOR = System.Drawing.ColorTranslator.FromHtml("#B0572C");
 
-
-
-
         // Jsons Repositories
         private const string HOTFIXLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/hotfixList.json";
         private const string DEVICEPACKLIST = "https://download.milestonesys.com/sgiu/hotfixHelper/devicePackList.json";
@@ -43,7 +40,7 @@ namespace MilestoneUpdater
         private static String REMOTESHARENAME = "MilestoneHotfix";
 
         string ms_Version; // DO I NEED THIS GLOBAL ??
-
+        private string downloadedDP; // DO I NEED THIS GLOBAL // this is the DP that is ready to deploy 
 
         public HotfixHelperV2()
         {
@@ -93,7 +90,6 @@ namespace MilestoneUpdater
 
 
 
-
         private void GetRecordingServers_Button_Click(object sender, EventArgs e)
         {
 
@@ -109,7 +105,8 @@ namespace MilestoneUpdater
                 Password = textBoxMSPass.Text
             };
 
-            NetworkCredential nc = new NetworkCredential(ms_Info.UserName, ms_Info.Password, ms_Info.Domain);                               // Build credentials
+            // Build credentials
+            NetworkCredential nc = new NetworkCredential(ms_Info.UserName, ms_Info.Password, ms_Info.Domain);
             Uri uri = new Uri("http://" + ms_Info.Address);
             ConfigApiClient _configApiClient = new ConfigApiClient();
 
@@ -117,6 +114,7 @@ namespace MilestoneUpdater
             bool isConnected = false;
             try
             {
+                // Attemp to connect
                 isConnected = MilestoneApiHelper.Login(uri, nc, _configApiClient);
             }
             catch (ServerNotFoundMIPException snfe)
@@ -136,6 +134,8 @@ namespace MilestoneUpdater
             {
                 WriteInConsole("Connection to : " + uri + " established.", LogType.message);
 
+                // If connected get the managment server 
+
                 ConfigurationItem managmentServer = _configApiClient.GetItem("/");
                 string ms_Name = Array.Find(managmentServer.Properties, ele => ele.Key == "Name").Value;
                 ms_Version = Array.Find(managmentServer.Properties, ele => ele.Key == "Version").Value;
@@ -143,13 +143,14 @@ namespace MilestoneUpdater
                 labelMSName.Text = ms_Name;
                 labelMSVer.Text = ms_Version;
 
-                /// ADD RECORDING SERVERS TO THE DATAGRID
+                // Get recording Server folder
 
                 ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
                 MilestoneApiHelper.FillChildren(recordingServerFolder, _configApiClient);
 
                 List<ServerInfo> recordingServerList = new List<ServerInfo>();
 
+                // Extract the needed information from Recording Servers and add them to a list 
                 foreach (ConfigurationItem recordingServer in recordingServerFolder.Children)
                 {
                     recordingServerList.Add(new ServerInfo()
@@ -164,13 +165,10 @@ namespace MilestoneUpdater
                     });
                 }
 
+                // ADD RECORDING SERVERS TO THE DATAGRID
                 PopulateServersDataGrid(recordingServerList);
 
-                /// TODO DO ADD ES AND MOS
-                /// 
-                /// /MIPKindFolder
-                /// MIPKind[9947f340-397c-483b-9e03-f27253f7f403]
-                /// 
+                // GET MOBILE SERVERS 
                 ConfigurationItem mipKindFolder = _configApiClient.GetItem("/MIPKindFolder");
                 MilestoneApiHelper.FillChildren(mipKindFolder, _configApiClient);
                 ConfigurationItem mobileServers = Array.Find(mipKindFolder.Children, ele => ele.DisplayName == "Mobile Servers");
@@ -178,9 +176,9 @@ namespace MilestoneUpdater
                 ConfigurationItem itemFolder = Array.Find(mobileServers.Children, ele => ele.ItemType == "MIPItemFolder");
                 MilestoneApiHelper.FillChildren(itemFolder, _configApiClient);
 
-
                 List<ServerInfo> mobileServerList = new List<ServerInfo>();
 
+                // Get info and add the MoSs to the list 
                 foreach (ConfigurationItem movilServer in itemFolder.Children)
                 {
                     mobileServerList.Add(new ServerInfo()
@@ -192,12 +190,12 @@ namespace MilestoneUpdater
                         UserName = ms_Info.UserName,
                         Password = ms_Info.Password,
                     });
-
                 }
-
 
                 PopulateServersDataGrid(mobileServerList);
 
+                /// TODO DO: ADD ES 
+                /// Could not find ES address with the SDK, i could easyly find it in the database, but meh 
 
                 MilestoneApiHelper.Logout(_configApiClient);
                 groupBoxHotfixes.Enabled = true;
@@ -210,6 +208,10 @@ namespace MilestoneUpdater
             }
         }
 
+        /// <summary>
+        /// Add the servers on a list of servers in the datagrid.
+        /// </summary>
+        /// <param name="serverList"></param>
         private void PopulateServersDataGrid(List<ServerInfo> serverList)
         {
             foreach (ServerInfo server in serverList)
@@ -225,6 +227,21 @@ namespace MilestoneUpdater
             }
         }
 
+
+        // HIDE PASSWORD ON DATAGRID
+        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.ColumnIndex == 5 && e.Value != null)
+            {
+                e.Value = new String('*', e.Value.ToString().Length);
+            }
+        }
+
+        /// <summary>
+        /// Changes the credentials of all the servers (could be useful if the user to log in to the MS is not administrator on the servers) 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void Change_All_Credencials_Button_Click(object sender, EventArgs e)
         {
             string _user = textBoxAllUser.Text;
@@ -335,24 +352,33 @@ namespace MilestoneUpdater
             //            ms_Version = "12.2";   /// TEST VALUES REMOVE ON PRODUCTION  -- MOS and ES not pulling
             //            ms_Version = "12.1";   /// TEST VALUES REMOVE ON PRODUCTION  -- MOS and ES not pulling
 
-
-
             if (ms_Version == null)
             {
                 WriteInConsole("Connect the server version", LogType.error);
                 return;
             }
 
+            // Hotfixes are updated all the time and the name of the file change.
+            // The manifest contains only the path to the hotfix folders the name is get from the HTML page
+            // exploring the page DOM i can get the links to download the latest hotfix
             using (WebClient wc = new WebClient())
             {
                 try
                 {
+                    // download the manifest 
                     var json = wc.DownloadString(HOTFIXLIST);
                     WriteInConsole("Got hotfix list from : " + HOTFIXLIST, LogType.info);
+
+                    // Convert json to object
                     List<Hotfix> items = JsonConvert.DeserializeObject<List<Hotfix>>(json);
 
+                    // Find the version
                     Hotfix hotfix = items.Find(elem => ms_Version.Contains(elem.Version));
 
+
+                    //// BOILERPLATE CODE HERE. NEEDS REFACTOR. 
+
+                    // Get RS hotfix 
                     string url = hotfix.RS;
                     HotfixFile hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
                     if (hotfixFile != null)
@@ -364,6 +390,7 @@ namespace MilestoneUpdater
                     /// TODO:  ADD DATABASE HOTFIXES TOO
                     /// Extend GetFilesFrom_HTML_DOM
 
+                    // Get MS hotfix
                     url = hotfix.MS;
                     foreach (var f in GetFilesFrom_HTML_DOM(url))
                     {
@@ -375,6 +402,8 @@ namespace MilestoneUpdater
                         }
                     }
 
+
+                    // Get ES hotfix
                     url = hotfix.ES;
                     hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
                     if (hotfixFile != null)
@@ -383,6 +412,7 @@ namespace MilestoneUpdater
                         AddHotfixFileToDataGrid(hotfixFile);
                     }
 
+                    // Get MoS hotfix
                     url = hotfix.MOS;
                     hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
                     if (hotfixFile != null)
@@ -398,129 +428,14 @@ namespace MilestoneUpdater
             }
         }
 
+
         /// <summary>
-        /// Manualy choose a hotfix from the local storage
-        /// 
+        /// Given a http address explore the DOM and returns the links of the hotfixes, 
+        /// Also return the Release and ReadMe files it will be usefull for show to the user 
+        /// what is going to be installed
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void SelectHotFoxLocalStorage_Click(object sender, EventArgs e)
-        {
-
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.InitialDirectory = "c:\\";
-                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-                openFileDialog.FilterIndex = 2;
-                openFileDialog.RestoreDirectory = true;
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string fileName = openFileDialog.FileName;
-
-                    HotfixFile hotfixFile = IdentifyHotfix(Path.GetFileName(fileName));
-
-
-                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);           // Copy file to LOCALFOLDER
-                    if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
-
-                    hotfixFile.Url = Path.GetFullPath(fileName);
-                    hotfixFile.LocalLocation = fileNameInstallationDir;
-
-                    AddHotfixFileToDataGrid(hotfixFile);
-
-
-                }
-            }
-        }
-
-
-
-        private void AddHotfixFileToDataGrid(HotfixFile hotfixFile)
-        {
-
-            int n = dataGridViewHotFixList.Rows.Add();
-            dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = hotfixFile.Type;
-            dataGridViewHotFixList.Rows[n].Cells["HotfixVersion"].Value = hotfixFile.Version;
-            dataGridViewHotFixList.Rows[n].Cells["HotfixServerVersion"].Value = hotfixFile.ServerVersion;
-            dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = hotfixFile.Url;
-            dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = hotfixFile.File;
-            dataGridViewHotFixList.Rows[n].Cells["LocalLocation"].Value = hotfixFile.LocalLocation;
-        }
-
-        private HotfixFile IdentifyHotfix(string fileName)
-        {
-
-
-            if (fileName == null) return null;
-
-
-            //DBHotfix399827.exe
-            if (fileName.Contains("DBHotfix"))
-            {
-                return new HotfixFile()
-                {
-                    Version = "X",
-                    Type = HotFixType.ManagementServer,
-                    ServerVersion = "X",
-                    File = fileName
-                };
-            }
-            else
-
-            //MilestoneXProtectMobileServerInstaller_x64.exe
-            if (fileName.Contains("MobileServer"))
-            {
-                return new HotfixFile()
-                {
-                    Version = "X",
-                    Type = HotFixType.MovileServer,
-                    ServerVersion = "X",
-                    File = fileName
-                };
-            }
-            else
-            {
-
-
-                //       0       1          2      3   45
-                //	Milestone.Hotfix.202107192213.RS.21.12.12177.80.exe
-                //  Milestone.Hotfix.202105100826.RS.20.31.93.182.exe
-                string[] slides = fileName.Split('.');
-
-                HotFixType hotfixtype;
-                switch (slides[3])
-                {
-                    case "RS":
-                        hotfixtype = HotFixType.RecordingServer;
-                        break;
-
-                    case "MS":
-                        hotfixtype = HotFixType.ManagementServer;
-                        break;
-
-                    case "ES":
-                        hotfixtype = HotFixType.EventServer;
-                        break;
-
-                    default:
-                        hotfixtype = HotFixType.Unknown;
-                        break;
-                }
-
-
-                return new HotfixFile()
-                {
-                    Version = slides[2],
-                    Type = hotfixtype,
-                    ServerVersion = slides[4] + "." + slides[5],
-                    File = fileName
-                };
-
-
-            }
-        }
-
+        /// <param name="folder"></param>
+        /// <returns></returns>
         private String[] GetFilesFrom_HTML_DOM(string folder)
         {
             String[] result = new String[10];
@@ -557,21 +472,146 @@ namespace MilestoneUpdater
             return result;
         }
 
+
+        /// <summary>
+        /// Manualy choose a hotfix from the local storage
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void SelectHotFixLocalStorage_Click(object sender, EventArgs e)
+        {
+
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\";
+                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string fileName = openFileDialog.FileName;
+
+                    HotfixFile hotfixFile = IdentifyHotfix(Path.GetFileName(fileName));
+
+                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);           // Copy file to LOCALFOLDER
+                    if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
+
+                    hotfixFile.Url = Path.GetFullPath(fileName);
+                    hotfixFile.LocalLocation = fileNameInstallationDir;
+
+                    AddHotfixFileToDataGrid(hotfixFile);
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Aff a hotfix to the hotfix datagrid
+        /// </summary>
+        /// <param name="hotfixFile"></param>
+        private void AddHotfixFileToDataGrid(HotfixFile hotfixFile)
+        {
+            int n = dataGridViewHotFixList.Rows.Add();
+            dataGridViewHotFixList.Rows[n].Cells["HotfixType"].Value = hotfixFile.Type;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixVersion"].Value = hotfixFile.Version;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixServerVersion"].Value = hotfixFile.ServerVersion;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixUrl"].Value = hotfixFile.Url;
+            dataGridViewHotFixList.Rows[n].Cells["HotfixFile"].Value = hotfixFile.File;
+            dataGridViewHotFixList.Rows[n].Cells["LocalLocation"].Value = hotfixFile.LocalLocation;
+        }
+
+
+        /// <summary>
+        /// Many names, no conventions like a nightmare. 
+        /// With a little effort we can identify with kind of hotfix is analysing the name
+        /// </summary>
+        /// <param name="fileName"></param>
+        /// <returns></returns>
+        private HotfixFile IdentifyHotfix(string fileName)
+        {
+            if (fileName == null) return null;
+
+            //DBHotfix399827.exe
+            if (fileName.Contains("DBHotfix"))
+            {
+                return new HotfixFile()
+                {
+                    Version = "X",
+                    Type = HotFixType.ManagementServer,
+                    ServerVersion = "X",
+                    File = fileName
+                };
+            }
+            else
+
+            //MilestoneXProtectMobileServerInstaller_x64.exe
+            if (fileName.Contains("MobileServer"))
+            {
+                return new HotfixFile()
+                {
+                    Version = "X",
+                    Type = HotFixType.MovileServer,
+                    ServerVersion = "X",
+                    File = fileName
+                };
+            }
+            else
+            {
+                //       0       1          2      3   45
+                //	Milestone.Hotfix.202107192213.RS.21.12.12177.80.exe
+                //  Milestone.Hotfix.202105100826.RS.20.31.93.182.exe
+                string[] slides = fileName.Split('.');
+
+                HotFixType hotfixtype;
+                switch (slides[3])
+                {
+                    case "RS":
+                        hotfixtype = HotFixType.RecordingServer;
+                        break;
+
+                    case "MS":
+                        hotfixtype = HotFixType.ManagementServer;
+                        break;
+
+                    case "ES":
+                        hotfixtype = HotFixType.EventServer;
+                        break;
+
+                    default:
+                        hotfixtype = HotFixType.Unknown;
+                        break;
+                }
+
+                return new HotfixFile()
+                {
+                    Version = slides[2],
+                    Type = hotfixtype,
+                    ServerVersion = slides[4] + "." + slides[5],
+                    File = fileName
+                };
+            }
+        }
+
+
+        /// <summary>
+        /// Aux method to get the file name from a address
+        /// </summary>
+        /// <param name="hrefStr"></param>
+        /// <returns></returns>
         private string GetFileName(string hrefStr)
         {
             return hrefStr.Substring(hrefStr.LastIndexOf("/") + 1);
         }
 
 
-        // HIDE PASSWORD ON DATAGRID
-        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
-        {
-            if (e.ColumnIndex == 5 && e.Value != null)
-            {
-                e.Value = new String('*', e.Value.ToString().Length);
-            }
-        }
-
+        /// <summary>
+        /// Actually this is the method that will download the hotfixes 
+        /// with the information gained from the manifest
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void GetHotfixes_Click(object sender, EventArgs e)
         {
             foreach (DataGridViewRow row in dataGridViewHotFixList.Rows)
@@ -597,41 +637,13 @@ namespace MilestoneUpdater
             }
         }
 
+
         /// <summary>
-        /// Thread execution control, limit the parallelism 
+        /// Populate the DP comboBox with the online manifest 
         /// </summary>
-        /// <param name="tasksToRun"></param>
-        /// <param name="maxTasksToRunInParallel"></param>
-        /// <param name="timeoutInMilliseconds"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task StartAndWaitAllThrottledAsync(IEnumerable<Task> tasksToRun, int maxTasksToRunInParallel, int timeoutInMilliseconds, CancellationToken cancellationToken = new CancellationToken())
-        {
-            List<Task> tasks = tasksToRun.ToList(); // Convert to a list of tasks so that we don't enumerate over it multiple times needlessly.
-            using (var throttler = new SemaphoreSlim(maxTasksToRunInParallel))
-            {
-                var postTaskTasks = new List<Task>();
-
-                // Have each task notify the throttler when it completes so that it decrements the number of tasks currently running.
-                tasks.ForEach(t => postTaskTasks.Add(t.ContinueWith(tsk => throttler.Release())));
-
-                // Start running each task.
-                foreach (var task in tasks)
-                {
-                    // Increment the number of tasks currently running and wait if too many are running.
-                    await throttler.WaitAsync(timeoutInMilliseconds, cancellationToken);
-
-                    cancellationToken.ThrowIfCancellationRequested();
-                    task.Start();
-                }
-
-                // Wait for all of the provided tasks to complete.
-                // We wait on the list of "post" tasks instead of the original tasks, otherwise there is a potential race condition where the throttlers using block is exited before some Tasks have had their "post" action completed, which references the throttler, resulting in an exception due to accessing a disposed object.
-                await Task.WhenAll(postTaskTasks.ToArray());
-            }
-        }
-
-        private void button7_Click(object sender, EventArgs e)
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void GetDevicePackButton_Click(object sender, EventArgs e)
         {
             using (WebClient wc = new WebClient())
             {
@@ -645,19 +657,25 @@ namespace MilestoneUpdater
                     {
                         source.Add(Path.GetFileName(item.link), item.link);
                     }
-                    comboBox1.Items.Clear();
-                    comboBox1.DataSource = new BindingSource(source, null);
-                    comboBox1.DisplayMember = "Key";
-                    comboBox1.ValueMember = "Value";
+                    device_Pack_comboBox.Items.Clear();
+                    device_Pack_comboBox.DataSource = new BindingSource(source, null);
+                    device_Pack_comboBox.DisplayMember = "Key";
+                    device_Pack_comboBox.ValueMember = "Value";
                 }
                 catch (Exception ex)
                 {
                     WriteInConsole(ex.Message, LogType.error);
                 }
             }
-
         }
 
+
+
+        /// <summary>
+        /// DP is heavy, download in background and show the progress in a progress bar 
+        /// </summary>
+        /// <param name="address"></param>
+        /// <param name="name"></param>
         public void DownLoadFileInBackground4(string address, string name)
         {
             WebClient client = new WebClient();
@@ -670,30 +688,63 @@ namespace MilestoneUpdater
             client.DownloadFileAsync(uri, LOCALFOLDER + "\\" + name);
         }
 
-        private string downloadedDP;
+        /// <summary>
+        /// Download completed callback function
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public AsyncCompletedEventHandler DownloadFileCompleted(string name)
         {
             Action<object, AsyncCompletedEventArgs> action = (sender, e) =>
             {
-
                 downloadedDP = name;
             };
             return new AsyncCompletedEventHandler(action);
         }
 
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DP_Combobox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            downloadedDP = null;
+            progressBar1.Value = 0;
+        }
+
+        /// <summary>
+        /// Progress callback function 
+        /// Update the progressbar
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void DownloadProgressCallback4(object sender, DownloadProgressChangedEventArgs e)
         {
             progressBar1.Value = e.ProgressPercentage;
         }
 
-        private void button5_Click(object sender, EventArgs e)
+
+        /// <summary>
+        /// Download the selected DP
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DownloadDP_Button_Click(object sender, EventArgs e)
         {
-            string link = comboBox1.SelectedValue.ToString();
+            string link = device_Pack_comboBox.SelectedValue.ToString();
             string name = link.Substring(link.LastIndexOf("/") + 1);
             DownLoadFileInBackground4(link, name);
         }
 
-        private void button4_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Install the downloaded DP
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Install_Device_Pack_Button_Click(object sender, EventArgs e)
         {
             var listOfTasks = new List<Task>();
 
@@ -712,12 +763,11 @@ namespace MilestoneUpdater
 
                     Cursor.Current = Cursors.WaitCursor;                               // Restore cursor
 
-                    listOfTasks.Add(new Task(() => CallInstallDevicePackProcess(remoteInfo, downloadedDP)));
+                    listOfTasks.Add(new Task(() => CallInstallDevicePackProcess(remoteInfo, downloadedDP)));   /// The call to start the remothe algoritm 
                 }
             }
 
             int _maxDegreeOfParallelism = (int)numericUpDown_MaxDegreeOfParallelism.Value;
-
 
             Task tasks = StartAndWaitAllThrottledAsync(listOfTasks, _maxDegreeOfParallelism, -1).ContinueWith(result =>
             {
@@ -727,6 +777,66 @@ namespace MilestoneUpdater
             Cursor.Current = Cursors.Default;                               // Restore cursor
         }
 
+        /// <summary>
+        /// Select  DP from local storage 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Local_DP_Button_Click(object sender, EventArgs e)
+        {
+
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\";
+                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+
+
+                    string fileName = openFileDialog.FileName;
+                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
+
+                    if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
+
+
+                    var source = new Dictionary<string, string>();
+
+                    source.Add(Path.GetFileName(fileName), fileNameInstallationDir);
+
+
+                    device_Pack_comboBox.DataSource = new BindingSource(source, null);
+                    device_Pack_comboBox.DisplayMember = "Key";
+                    device_Pack_comboBox.ValueMember = "Value";
+
+
+                    progressBar1.Value = 100;
+                    downloadedDP = Path.GetFileName(fileName);
+
+
+                }
+            }
+
+        }
+
+
+        /// <summary>
+        /// To intall the Device pack the steps are
+        /// Identify if the installation will be performed locally or remote
+        /// If is local just execute the file
+        /// If remotely:
+        /// 1) establish a connection with the WMI scope.
+        /// 2) Create a folder in the remote server
+        /// 3) Share the remote folder (public) 
+        /// 4) Copy the file (public) -> todo: use impersonating, then the folder doesn't need to be public
+        /// 5) Executhe the installation file 
+        /// 6) Unshare the folder
+        /// 7) Delete the folder
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="file"></param>
         private void CallInstallDevicePackProcess(ServerInfo remoteInfo, string file)
         {
 
@@ -738,6 +848,7 @@ namespace MilestoneUpdater
             else
             {
                 ManagementScope scope = NetworkTools.EstablishConnection(remoteInfo);
+                scope.Connect();
 
                 CreateRemoteFolder(remoteInfo, scope);
                 ShareRemoteFolder(remoteInfo, scope);
@@ -750,13 +861,13 @@ namespace MilestoneUpdater
 
 
 
-        ///////////////////
-        // REMOTE LOGIC //
-        ///////////////////
+        /////////////////////////////////
+        // REMOTE LOGIC IMPLEMENTATION //
+        /////////////////////////////////
 
 
         /// <summary>
-        /// 
+        /// Create the folder 
         /// </summary>
         /// <param name="remoteInfo"></param>
         /// <param name="theScope"></param>
@@ -767,7 +878,7 @@ namespace MilestoneUpdater
             {
                 WriteInConsole("Creating Share Folder " + remoteInfo.Address, LogType.info);
                 var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
-                object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };
+                object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };  
                 var mdResult = Win32_Process_Class.InvokeMethod("Create", cmdMdTemp);
                 WriteInConsole("Create Share Folder " + CodeToStringConverters.ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
 
@@ -781,7 +892,7 @@ namespace MilestoneUpdater
         }
 
         /// <summary>
-        /// 
+        /// Share the folder 
         /// </summary>
         /// <param name="remoteInfo"></param>
         /// <param name="theScope"></param>
@@ -794,19 +905,20 @@ namespace MilestoneUpdater
                 ManagementBaseObject shareParams = NetworkTools.SetShareParams(winShareClass, REMOTEFOLDER, REMOTESHARENAME);
                 var outParams = winShareClass.InvokeMethod("Create", shareParams, null);
                 WriteInConsole("Share Folder " + CodeToStringConverters.ShareFolderErrorCodeToString(Convert.ToInt32(outParams.Properties["ReturnValue"].Value)), LogType.info);
-
             }
             catch (Exception e)
             {
                 WriteInConsole(e.Message, LogType.error);
-
-
             }
         }
 
+        /// <summary>
+        /// Copy the hotfix
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="file"></param>
         private void CopyFile(ServerInfo remoteInfo, string file)
         {
-            // Copy the hotfix 
             try
             {
                 string shareFolder = @"\\" + remoteInfo.Address + "\\" + REMOTESHARENAME;
@@ -828,7 +940,13 @@ namespace MilestoneUpdater
             }
         }
 
-
+        /// <summary>
+        /// Execute the file
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="theScope"></param>
+        /// <param name="file"></param>
+        /// <param name="args"></param>
         private void ExecuteFile(ServerInfo remoteInfo, ManagementScope theScope, string file, string args)
         {
             WriteInConsole("Executing Hotfix on server " + remoteInfo.Address, LogType.info);
@@ -879,6 +997,12 @@ namespace MilestoneUpdater
 
         }
 
+
+        /// <summary>
+        /// Unshare the folder
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="theScope"></param>
         private void UnshareRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
         {
             try
@@ -905,6 +1029,12 @@ namespace MilestoneUpdater
 
 
         }
+
+        /// <summary>
+        /// Delete the folder
+        /// </summary>
+        /// <param name="remoteInfo"></param>
+        /// <param name="theScope"></param>
         private void DeleteRemoteFolder(ServerInfo remoteInfo, ManagementScope theScope)
         {
             try
@@ -923,51 +1053,7 @@ namespace MilestoneUpdater
 
         }
 
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            downloadedDP = null;
-            progressBar1.Value = 0;
-        }
 
-
-        private void button8_Click(object sender, EventArgs e)
-        {
-
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.InitialDirectory = "c:\\";
-                openFileDialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*";
-                openFileDialog.FilterIndex = 2;
-                openFileDialog.RestoreDirectory = true;
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-
-
-                    string fileName = openFileDialog.FileName;
-                    string fileNameInstallationDir = LOCALFOLDER + "\\" + Path.GetFileName(fileName);
-
-                    if (!File.Exists(fileNameInstallationDir)) File.Copy(fileName, fileNameInstallationDir);
-
-
-                    var source = new Dictionary<string, string>();
-
-                    source.Add(Path.GetFileName(fileName), fileNameInstallationDir);
-
-
-                    comboBox1.DataSource = new BindingSource(source, null);
-                    comboBox1.DisplayMember = "Key";
-                    comboBox1.ValueMember = "Value";
-
-
-                    progressBar1.Value = 100;
-                    downloadedDP = Path.GetFileName(fileName);
-
-
-                }
-            }
-
-        }
 
 
         bool debug = true;
@@ -1009,6 +1095,7 @@ namespace MilestoneUpdater
             }
         }
 
+
         enum LogType
         {
             debug,
@@ -1017,9 +1104,40 @@ namespace MilestoneUpdater
             error,
         }
 
-        private void groupBox4_Enter(object sender, EventArgs e)
+        /// <summary>
+        /// Thread execution control, limit the parallelism 
+        /// </summary>
+        /// <param name="tasksToRun"></param>
+        /// <param name="maxTasksToRunInParallel"></param>
+        /// <param name="timeoutInMilliseconds"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        public async Task StartAndWaitAllThrottledAsync(IEnumerable<Task> tasksToRun, int maxTasksToRunInParallel, int timeoutInMilliseconds, CancellationToken cancellationToken = new CancellationToken())
         {
+            List<Task> tasks = tasksToRun.ToList(); // Convert to a list of tasks so that we don't enumerate over it multiple times needlessly.
+            using (var throttler = new SemaphoreSlim(maxTasksToRunInParallel))
+            {
+                var postTaskTasks = new List<Task>();
 
+                // Have each task notify the throttler when it completes so that it decrements the number of tasks currently running.
+                tasks.ForEach(t => postTaskTasks.Add(t.ContinueWith(tsk => throttler.Release())));
+
+                // Start running each task.
+                foreach (var task in tasks)
+                {
+                    // Increment the number of tasks currently running and wait if too many are running.
+                    await throttler.WaitAsync(timeoutInMilliseconds, cancellationToken);
+
+                    cancellationToken.ThrowIfCancellationRequested();
+                    task.Start();
+                }
+
+                // Wait for all of the provided tasks to complete.
+                // We wait on the list of "post" tasks instead of the original tasks, otherwise there is a potential race condition where the throttlers using block is exited before some Tasks have had their "post" action completed, which references the throttler, resulting in an exception due to accessing a disposed object.
+                await Task.WhenAll(postTaskTasks.ToArray());
+            }
         }
+
+
     }
 }

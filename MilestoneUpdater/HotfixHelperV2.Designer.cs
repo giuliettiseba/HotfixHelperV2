@@ -65,6 +65,12 @@ namespace MilestoneUpdater
             this.textBoxAllUser = new System.Windows.Forms.TextBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.dataGridViewHotFixList = new System.Windows.Forms.DataGridView();
+            this.HotfixType = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixServerVersion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixVersion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixUrl = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.HotfixFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.LocalLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBoxHotfixes = new System.Windows.Forms.GroupBox();
             this.button6 = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -72,19 +78,13 @@ namespace MilestoneUpdater
             this.button3 = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
+            this.install_Device_Pack_Button = new System.Windows.Forms.Button();
+            this.downloadDP_Button = new System.Windows.Forms.Button();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.device_Pack_comboBox = new System.Windows.Forms.ComboBox();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.button8 = new System.Windows.Forms.Button();
+            this.local_DP_Button = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
-            this.HotfixType = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HotfixServerVersion = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HotfixVersion = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HotfixUrl = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.HotfixFile = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.LocalLocation = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.serversDataGridView)).BeginInit();
@@ -419,6 +419,48 @@ namespace MilestoneUpdater
             this.dataGridViewHotFixList.Size = new System.Drawing.Size(1035, 161);
             this.dataGridViewHotFixList.TabIndex = 0;
             // 
+            // HotfixType
+            // 
+            this.HotfixType.FillWeight = 13F;
+            this.HotfixType.HeaderText = "HotfixType";
+            this.HotfixType.Name = "HotfixType";
+            this.HotfixType.ReadOnly = true;
+            // 
+            // HotfixServerVersion
+            // 
+            this.HotfixServerVersion.FillWeight = 10F;
+            this.HotfixServerVersion.HeaderText = "HotfixServerVersion";
+            this.HotfixServerVersion.Name = "HotfixServerVersion";
+            this.HotfixServerVersion.ReadOnly = true;
+            // 
+            // HotfixVersion
+            // 
+            this.HotfixVersion.FillWeight = 10F;
+            this.HotfixVersion.HeaderText = "HotfixVersion";
+            this.HotfixVersion.Name = "HotfixVersion";
+            this.HotfixVersion.ReadOnly = true;
+            // 
+            // HotfixUrl
+            // 
+            this.HotfixUrl.FillWeight = 31.81049F;
+            this.HotfixUrl.HeaderText = "HotfixUrl";
+            this.HotfixUrl.Name = "HotfixUrl";
+            this.HotfixUrl.ReadOnly = true;
+            // 
+            // HotfixFile
+            // 
+            this.HotfixFile.FillWeight = 31.81049F;
+            this.HotfixFile.HeaderText = "HotfixFile";
+            this.HotfixFile.Name = "HotfixFile";
+            this.HotfixFile.ReadOnly = true;
+            // 
+            // LocalLocation
+            // 
+            this.LocalLocation.FillWeight = 31.81049F;
+            this.LocalLocation.HeaderText = "LocalLocation";
+            this.LocalLocation.Name = "LocalLocation";
+            this.LocalLocation.ReadOnly = true;
+            // 
             // groupBoxHotfixes
             // 
             this.groupBoxHotfixes.Controls.Add(this.button6);
@@ -445,7 +487,7 @@ namespace MilestoneUpdater
             this.button6.TabIndex = 27;
             this.button6.Text = "Select Hotfix from Local Storage";
             this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.SelectHotFoxLocalStorage_Click);
+            this.button6.Click += new System.EventHandler(this.SelectHotFixLocalStorage_Click);
             // 
             // label1
             // 
@@ -506,27 +548,27 @@ namespace MilestoneUpdater
             // 
             // button4
             // 
-            this.button4.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button4.ForeColor = System.Drawing.Color.Snow;
-            this.button4.Location = new System.Drawing.Point(763, 18);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(171, 83);
-            this.button4.TabIndex = 27;
-            this.button4.Text = "Install Device Pack";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
+            this.install_Device_Pack_Button.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.install_Device_Pack_Button.ForeColor = System.Drawing.Color.Snow;
+            this.install_Device_Pack_Button.Location = new System.Drawing.Point(763, 18);
+            this.install_Device_Pack_Button.Name = "button4";
+            this.install_Device_Pack_Button.Size = new System.Drawing.Size(171, 83);
+            this.install_Device_Pack_Button.TabIndex = 27;
+            this.install_Device_Pack_Button.Text = "Install Device Pack";
+            this.install_Device_Pack_Button.UseVisualStyleBackColor = true;
+            this.install_Device_Pack_Button.Click += new System.EventHandler(this.Install_Device_Pack_Button_Click);
             // 
             // button5
             // 
-            this.button5.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button5.ForeColor = System.Drawing.Color.Snow;
-            this.button5.Location = new System.Drawing.Point(637, 34);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(120, 21);
-            this.button5.TabIndex = 28;
-            this.button5.Text = "DOWNLOAD DP";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
+            this.downloadDP_Button.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.downloadDP_Button.ForeColor = System.Drawing.Color.Snow;
+            this.downloadDP_Button.Location = new System.Drawing.Point(637, 34);
+            this.downloadDP_Button.Name = "downloadDP_Button";
+            this.downloadDP_Button.Size = new System.Drawing.Size(120, 21);
+            this.downloadDP_Button.TabIndex = 28;
+            this.downloadDP_Button.Text = "DOWNLOAD DP";
+            this.downloadDP_Button.UseVisualStyleBackColor = true;
+            this.downloadDP_Button.Click += new System.EventHandler(this.DownloadDP_Button_Click);
             // 
             // progressBar1
             // 
@@ -537,21 +579,21 @@ namespace MilestoneUpdater
             // 
             // comboBox1
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(216, 35);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(415, 21);
-            this.comboBox1.TabIndex = 30;
-            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            this.device_Pack_comboBox.FormattingEnabled = true;
+            this.device_Pack_comboBox.Location = new System.Drawing.Point(216, 35);
+            this.device_Pack_comboBox.Name = "comboBox1";
+            this.device_Pack_comboBox.Size = new System.Drawing.Size(415, 21);
+            this.device_Pack_comboBox.TabIndex = 30;
+            this.device_Pack_comboBox.SelectedIndexChanged += new System.EventHandler(this.DP_Combobox_SelectedIndexChanged);
             // 
             // groupBox6
             // 
-            this.groupBox6.Controls.Add(this.button8);
+            this.groupBox6.Controls.Add(this.local_DP_Button);
             this.groupBox6.Controls.Add(this.button7);
-            this.groupBox6.Controls.Add(this.comboBox1);
-            this.groupBox6.Controls.Add(this.button4);
+            this.groupBox6.Controls.Add(this.device_Pack_comboBox);
+            this.groupBox6.Controls.Add(this.install_Device_Pack_Button);
             this.groupBox6.Controls.Add(this.progressBar1);
-            this.groupBox6.Controls.Add(this.button5);
+            this.groupBox6.Controls.Add(this.downloadDP_Button);
             this.groupBox6.ForeColor = System.Drawing.Color.Snow;
             this.groupBox6.Location = new System.Drawing.Point(8, 651);
             this.groupBox6.Name = "groupBox6";
@@ -562,15 +604,15 @@ namespace MilestoneUpdater
             // 
             // button8
             // 
-            this.button8.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.button8.ForeColor = System.Drawing.Color.Snow;
-            this.button8.Location = new System.Drawing.Point(90, 62);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(667, 39);
-            this.button8.TabIndex = 32;
-            this.button8.Text = "Select DP from Local Storage";
-            this.button8.UseVisualStyleBackColor = true;
-            this.button8.Click += new System.EventHandler(this.button8_Click);
+            this.local_DP_Button.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.local_DP_Button.ForeColor = System.Drawing.Color.Snow;
+            this.local_DP_Button.Location = new System.Drawing.Point(90, 62);
+            this.local_DP_Button.Name = "button8";
+            this.local_DP_Button.Size = new System.Drawing.Size(667, 39);
+            this.local_DP_Button.TabIndex = 32;
+            this.local_DP_Button.Text = "Select DP from Local Storage";
+            this.local_DP_Button.UseVisualStyleBackColor = true;
+            this.local_DP_Button.Click += new System.EventHandler(this.Local_DP_Button_Click);
             // 
             // button7
             // 
@@ -582,49 +624,7 @@ namespace MilestoneUpdater
             this.button7.TabIndex = 31;
             this.button7.Text = "Find DP Online";
             this.button7.UseVisualStyleBackColor = true;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
-            // 
-            // HotfixType
-            // 
-            this.HotfixType.FillWeight = 13F;
-            this.HotfixType.HeaderText = "HotfixType";
-            this.HotfixType.Name = "HotfixType";
-            this.HotfixType.ReadOnly = true;
-            // 
-            // HotfixServerVersion
-            // 
-            this.HotfixServerVersion.FillWeight = 10F;
-            this.HotfixServerVersion.HeaderText = "HotfixServerVersion";
-            this.HotfixServerVersion.Name = "HotfixServerVersion";
-            this.HotfixServerVersion.ReadOnly = true;
-            // 
-            // HotfixVersion
-            // 
-            this.HotfixVersion.FillWeight = 10F;
-            this.HotfixVersion.HeaderText = "HotfixVersion";
-            this.HotfixVersion.Name = "HotfixVersion";
-            this.HotfixVersion.ReadOnly = true;
-            // 
-            // HotfixUrl
-            // 
-            this.HotfixUrl.FillWeight = 31.81049F;
-            this.HotfixUrl.HeaderText = "HotfixUrl";
-            this.HotfixUrl.Name = "HotfixUrl";
-            this.HotfixUrl.ReadOnly = true;
-            // 
-            // HotfixFile
-            // 
-            this.HotfixFile.FillWeight = 31.81049F;
-            this.HotfixFile.HeaderText = "HotfixFile";
-            this.HotfixFile.Name = "HotfixFile";
-            this.HotfixFile.ReadOnly = true;
-            // 
-            // LocalLocation
-            // 
-            this.LocalLocation.FillWeight = 31.81049F;
-            this.LocalLocation.HeaderText = "LocalLocation";
-            this.LocalLocation.Name = "LocalLocation";
-            this.LocalLocation.ReadOnly = true;
+            this.button7.Click += new System.EventHandler(this.GetDevicePackButton_Click);
             // 
             // HotfixHelperV2
             // 
@@ -697,14 +697,14 @@ namespace MilestoneUpdater
         private System.Windows.Forms.Button button3;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button install_Device_Pack_Button;
         private System.Windows.Forms.DataGridViewTextBoxColumn DPversion;
-        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button downloadDP_Button;
         private System.Windows.Forms.ProgressBar progressBar1;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.ComboBox device_Pack_comboBox;
         private System.Windows.Forms.GroupBox groupBox6;
         private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Button local_DP_Button;
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.DataGridViewTextBoxColumn HotfixType;
         private System.Windows.Forms.DataGridViewTextBoxColumn HotfixServerVersion;
