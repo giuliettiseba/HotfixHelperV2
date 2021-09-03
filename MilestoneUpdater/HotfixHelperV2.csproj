@@ -305,7 +305,6 @@
     </Compile>
     <None Include="app.manifest" />
     <None Include="devicePackList.json" />
-    <None Include="hotfixList - Copy.json" />
     <None Include="hotfixList.json" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

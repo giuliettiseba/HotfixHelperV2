@@ -55,8 +55,8 @@ namespace MilestoneUpdater
             this.groupBox3.BackColor = BACKCOLOR;
             this.groupBox4.BackColor = BACKCOLOR;
 
-            TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
-            //cTestParameters();                  /// REMOVE IN PRODUCTION !!!!
+            //TestParametersLocal();          /// REMOVE IN PRODUCTION !!!!
+            TestParameters();                  /// REMOVE IN PRODUCTION !!!!
         }
 
 
@@ -848,7 +848,7 @@ namespace MilestoneUpdater
             else
             {
                 ManagementScope scope = NetworkTools.EstablishConnection(remoteInfo);
-                scope.Connect();
+          //      scope.Connect();
 
                 CreateRemoteFolder(remoteInfo, scope);
                 ShareRemoteFolder(remoteInfo, scope);
@@ -856,6 +856,8 @@ namespace MilestoneUpdater
                 ExecuteFile(remoteInfo, scope, REMOTEFOLDER + "\\" + file, " --quiet");
                 UnshareRemoteFolder(remoteInfo, scope);
                 DeleteRemoteFolder(remoteInfo, scope);
+
+         
             }
         }
 
@@ -876,11 +878,15 @@ namespace MilestoneUpdater
         {
             try
             {
+
+
                 WriteInConsole("Creating Share Folder " + remoteInfo.Address, LogType.info);
                 var Win32_Process_Class = new ManagementClass(theScope, new ManagementPath("Win32_Process"), new ObjectGetOptions());
                 object[] cmdMdTemp = { "cmd.exe /c md " + REMOTEFOLDER };  
                 var mdResult = Win32_Process_Class.InvokeMethod("Create", cmdMdTemp);
                 WriteInConsole("Create Share Folder " + CodeToStringConverters.ErrorCodeToString(Convert.ToInt32(mdResult)), LogType.info);
+                Thread.Sleep(2000);  /// I hate this method, using cmd to create the folder is not nice, 
+
 
             }
             catch (Exception e)

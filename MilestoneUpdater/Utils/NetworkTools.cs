@@ -12,9 +12,18 @@ namespace HotfixHelperV2.Utils
 
         internal static bool IsLocalServer(string address)
         {
-            IPHostEntry remoteHostEntry = Dns.GetHostEntry(address);
+
+            IPAddress remoteHostEntry;
+            bool ValidateIP = IPAddress.TryParse(address, out remoteHostEntry);
+
+            if (!ValidateIP)
+            {
+                remoteHostEntry = Dns.GetHostEntry(address).AddressList.FirstOrDefault();
+            }
+
+
             IPHostEntry localHostEntry = Dns.GetHostEntry(Dns.GetHostName());
-            return remoteHostEntry.AddressList.Contains(localHostEntry.AddressList.FirstOrDefault());
+            return localHostEntry.AddressList.Contains(remoteHostEntry);
         }
 
         internal static ManagementScope EstablishConnection(ServerInfo remoteInfo)
@@ -65,8 +74,16 @@ namespace HotfixHelperV2.Utils
         internal static string ResolveHostNametoIP(string host)
         {
             IPHostEntry hostEntry;
-            hostEntry = Dns.GetHostEntry(host);
-            return hostEntry.AddressList.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault().ToString();
+
+            IPAddress ipaddress;
+            bool ValidateIP = IPAddress.TryParse(host, out ipaddress);
+            if (ValidateIP)
+                return host;
+            else
+            {
+                hostEntry = Dns.GetHostEntry(host);
+                return hostEntry.AddressList.Where(ip => ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).FirstOrDefault().ToString();
+            }
         }
     }
 }
