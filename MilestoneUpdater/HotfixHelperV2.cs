@@ -78,7 +78,7 @@ namespace MilestoneUpdater
         }
         private void TestParameters()
         {
-            textBoxMSAddress.Text = "10.1.0.192";
+            textBoxMSAddress.Text = "10.1.0.93";
             textBoxMSDomain.Text = "MEX-LAB";
             textBoxMSUser.Text = "SGIU";
             textBoxMSPass.Text = "Milestone1$";
@@ -143,6 +143,28 @@ namespace MilestoneUpdater
                 labelMSName.Text = ms_Name;
                 labelMSVer.Text = ms_Version;
 
+
+
+
+                // ADD MS TO THE DATAGRID
+
+                List<ServerInfo> managementServerList = new List<ServerInfo>();
+                
+                managementServerList.Add(new ServerInfo()
+                 {
+                     DisplayName = managmentServer.DisplayName,
+                     Address = Array.Find(managmentServer.Properties, ele => ele.Key == "ComputerName").Value,
+                     ServerType = HotFixType.ManagementServer.ToString(),
+                     Domain = ms_Info.Domain,
+                     UserName = ms_Info.UserName,
+                     Password = ms_Info.Password,
+
+                 });
+
+                PopulateServersDataGrid(managementServerList);
+
+
+
                 // Get recording Server folder
 
                 ConfigurationItem recordingServerFolder = _configApiClient.GetItem("/RecordingServerFolder");
@@ -168,31 +190,31 @@ namespace MilestoneUpdater
                 // ADD RECORDING SERVERS TO THE DATAGRID
                 PopulateServersDataGrid(recordingServerList);
 
-                // GET MOBILE SERVERS 
-                ConfigurationItem mipKindFolder = _configApiClient.GetItem("/MIPKindFolder");
-                MilestoneApiHelper.FillChildren(mipKindFolder, _configApiClient);
-                ConfigurationItem mobileServers = Array.Find(mipKindFolder.Children, ele => ele.DisplayName == "Mobile Servers");
-                MilestoneApiHelper.FillChildren(mobileServers, _configApiClient);
-                ConfigurationItem itemFolder = Array.Find(mobileServers.Children, ele => ele.ItemType == "MIPItemFolder");
-                MilestoneApiHelper.FillChildren(itemFolder, _configApiClient);
+                //// GET MOBILE SERVERS 
+                //ConfigurationItem mipKindFolder = _configApiClient.GetItem("/MIPKindFolder");
+                //MilestoneApiHelper.FillChildren(mipKindFolder, _configApiClient);
+                //ConfigurationItem mobileServers = Array.Find(mipKindFolder.Children, ele => ele.DisplayName == "Mobile Servers");
+                //MilestoneApiHelper.FillChildren(mobileServers, _configApiClient);
+                //ConfigurationItem itemFolder = Array.Find(mobileServers.Children, ele => ele.ItemType == "MIPItemFolder");
+                //MilestoneApiHelper.FillChildren(itemFolder, _configApiClient);
 
-                List<ServerInfo> mobileServerList = new List<ServerInfo>();
+                //List<ServerInfo> mobileServerList = new List<ServerInfo>();
 
-                // Get info and add the MoSs to the list 
-                foreach (ConfigurationItem mobileServer in itemFolder.Children)
-                {
-                    mobileServerList.Add(new ServerInfo()
-                    {
-                        DisplayName = Array.Find(mobileServer.Properties, ele => ele.Key == "Name").Value,
-                        Address = Array.Find(mobileServer.Properties, ele => ele.Key == "ServerIdName").Value,
-                        ServerType = HotFixType.MobileServer.ToString(),
-                        Domain = ms_Info.Domain,
-                        UserName = ms_Info.UserName,
-                        Password = ms_Info.Password,
-                    });
-                }
+                //// Get info and add the MoSs to the list 
+                //foreach (ConfigurationItem mobileServer in itemFolder.Children)
+                //{
+                //    mobileServerList.Add(new ServerInfo()
+                //    {
+                //        DisplayName = Array.Find(mobileServer.Properties, ele => ele.Key == "Name").Value,
+                //        Address = Array.Find(mobileServer.Properties, ele => ele.Key == "ServerIdName").Value,
+                //        ServerType = HotFixType.MobileServer.ToString(),
+                //        Domain = ms_Info.Domain,
+                //        UserName = ms_Info.UserName,
+                //        Password = ms_Info.Password,
+                //    });
+                //}
 
-                PopulateServersDataGrid(mobileServerList);
+                //PopulateServersDataGrid(mobileServerList);
 
                 /// TODO DO: ADD ES 
                 /// Could not find ES address with the SDK, i could easyly find it in the database, but meh 
@@ -267,6 +289,7 @@ namespace MilestoneUpdater
         private void InstallHotfixesClick(object sender, EventArgs e)
         {
             var listOfTasks = new List<Task>();
+
 
             foreach (DataGridViewRow row in serversDataGridView.Rows)
             {
@@ -390,6 +413,8 @@ namespace MilestoneUpdater
                     /// TODO:  ADD DATABASE HOTFIXES TOO
                     /// Extend GetFilesFrom_HTML_DOM
 
+                    // Continue here
+
                     // Get MS hotfix
                     url = hotfix.MS;
                     foreach (var f in GetFilesFrom_HTML_DOM(url))
@@ -403,23 +428,23 @@ namespace MilestoneUpdater
                     }
 
 
-                    // Get ES hotfix
-                    url = hotfix.ES;
-                    hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
-                    if (hotfixFile != null)
-                    {
-                        hotfixFile.Url = url;
-                        AddHotfixFileToDataGrid(hotfixFile);
-                    }
+                    //// Get ES hotfix
+                    //url = hotfix.ES;
+                    //hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
+                    //if (hotfixFile != null)
+                    //{
+                    //    hotfixFile.Url = url;
+                    //    AddHotfixFileToDataGrid(hotfixFile);
+                    //}
 
-                    // Get MoS hotfix
-                    url = hotfix.MOS;
-                    hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
-                    if (hotfixFile != null)
-                    {
-                        hotfixFile.Url = url;
-                        AddHotfixFileToDataGrid(hotfixFile);
-                    }
+                    //// Get MoS hotfix
+                    //url = hotfix.MOS;
+                    //hotfixFile = IdentifyHotfix(Path.GetFileName(GetFilesFrom_HTML_DOM(url)[0]));
+                    //if (hotfixFile != null)
+                    //{
+                    //    hotfixFile.Url = url;
+                    //    AddHotfixFileToDataGrid(hotfixFile);
+                    //}
                 }
                 catch (Exception ex)
                 {
